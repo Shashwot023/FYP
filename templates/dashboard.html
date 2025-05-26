@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - SME Analytics</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header Section -->
+
+ <header class="header">
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="{{ url_for('index') }}" class="logo">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="SME Analytics Logo" class="img-logo">
+                <span class="nav-link-logo active">SME Analytics</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('index') }}" class="nav-link">Home</a></li>
+                <li><a href="{{ url_for('features_overview') }}" class="nav-link">Feature Overview</a></li> 
+                <li><a href="{{ url_for('contact_us') }}" class="nav-link">Contact Us</a></li>
+            </ul>
+            <div class="nav-buttons">
+                {% if session.get('user_id') %}
+                <a href="{{ url_for('dashboard') }}" class="nav-link active">Dashboard</a>
+                <a href="{{ url_for('logout') }}" class="nav-link">Logout</a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="btn btn-secondary">Log In</a>
+                <a href="{{ url_for('signup') }}" class="btn btn-secondary">Sign Up</a>
+            {% endif %}
+            </div>
+        </div>
+    </nav>
+</header>
+
+    <!-- Dashboard Section -->
+    <section class="dashboard-section">
+        <div class="container">
+            <div class="dashboard-decorative">
+                <div class="decorative-dots">
+                    <div class="dot dot-teal"></div>
+                    <div class="dot dot-yellow"></div>
+                    <div class="dot dot-pink"></div>
+                    <div class="dot dot-green"></div>
+                </div>
+            </div>
+            <div class="dashboard-container">
+                <h1 class="dashboard-title">Welcome, {{ user[1] }}!</h1>
+<p class="dashboard-subtitle">Your business insights are below.</p>
+<div class="analytics-grid">
+    <div class="analytics-card">
+        <h3 class="analytics-title">Business Name</h3>
+        <p class="analytics-value">{{ user[3] }}</p>
+    </div>
+    <div class="analytics-card">
+        <h3 class="analytics-title">Industry</h3>
+        <p class="analytics-value">{{ user[4] }}</p>
+    </div>
+    <div class="analytics-card">
+        <h3 class="analytics-title">Location</h3>
+        <p class="analytics-value">{{ user[5] }}</p>
+    </div>
+</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer Section -->
+     <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <div class="logo-icon"></div>
+                    <span class="logo-text">SME Analytics</span>
+                </div>
+                <div class="newsletter">
+                    <h3 class="newsletter-title">Stay updated with the latest insights</h3>
+                    <form class="newsletter-form" id="newsletter-form" method="POST" action="{{ url_for('newsletter') }}">
+    <input type="email" id="email-input" name="email" class="newsletter-input" placeholder="Enter your email">
+    <button type="submit" class="btn btn-primary">Subscribe</button>
+</form>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div class="footer-left">
+                    <select class="language-selector">
+                        <option value="en">English</option>
+                        <option value="ne">नेपाली</option>
+                    </select>
+                </div>
+                <div class="footer-center">
+                    <p class="footer-text">© 2025 SME Analytics</p>
+                </div>
+                <div class="footer-right">
+                    <div class="social-icons">
+                        <a href="#" class="social-icon twitter" aria-label="Twitter"></a>
+                        <a href="#" class="social-icon linkedin" aria-label="LinkedIn"></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

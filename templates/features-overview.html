@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Features Overview - SME Analytics</title>
+    <meta name="description" content="Explore powerful predictive analytics features for Nepalese SMEs - inventory management, customer analytics, and financial forecasting.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
+    <link rel="icon" href="static/images/logo.png" type="image/x-icon">
+</head>
+<body>
+ <header class="header">
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="{{ url_for('index') }}" class="logo">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="SME Analytics Logo" class="img-logo">
+                <span class="nav-link-logo active">SME Analytics</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('index') }}" class="nav-link">Home</a></li>
+                <li><a href="{{ url_for('features_overview') }}" class="nav-link active">Feature Overview</a></li> 
+                <li><a href="{{ url_for('contact_us') }}" class="nav-link">Contact Us</a></li>
+            </ul>
+            <div class="nav-buttons">
+                {% if session.get('user_id') %}
+                <a href="{{ url_for('dashboard') }}" class="nav-link">Dashboard</a>
+                <a href="{{ url_for('logout') }}" class="nav-link">Logout</a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="btn btn-secondary">Log In</a>
+                <a href="{{ url_for('signup') }}" class="btn btn-secondary">Sign Up</a>
+            {% endif %}
+            </div>
+        </div>
+    </nav>
+</header>
+
+    <!-- Features Overview Section -->
+    <section class="features-overview-section">
+        <div class="container-features">
+            <h1 class="section-title-features">Powerful Predictive Analytics for Nepalese SMEs</h1>
+            <p class="section-subtitle-features">Explore how SME Analytics can transform your business operations with tailored solutions.</p>
+
+            <!-- Main Features Grid -->
+            <div class="main-features-grid">
+                <div class="main-feature-card">
+                    <div class="feature-icon-large cart-icon">🛒</div>
+                    <h3 class="feature-title">Predictive Inventory Management</h3>
+                    <p class="feature-description">Forecast demand with accuracy to optimize stock levels, reduce waste, and improve cash flow.</p>
+                    
+                    <div class="feature-example">
+                        <h4 class="example-category">Retail</h4>
+                        <div class="example-image-placeholder">
+                           <img src="static/images/garment.jpg" alt="Retail Example" class="img-features">
+                        </div>
+                        <p class="example-description">For a small garment shop in Kathmandu, predict seasonal demand for specific clothing items to avoid overstocking or stockouts during festivals.</p>
+                    </div>
+                </div>
+                
+                <div class="main-feature-card">
+                    <div class="feature-icon-large user-icon">👤</div>
+                    <h3 class="feature-title">Customer Behavior Analytics</h3>
+                    <p class="feature-description">Understand customer preferences, predict buying patterns, and personalize marketing efforts for higher engagement.</p>
+                    
+                    <div class="feature-example">
+                        <h4 class="example-category">Hospitality</h4>
+                        <div class="example-image-placeholder">
+                            <img src="static/images/guest-house.jpg" alt="Hospitality Example" class="img-features">
+                        </div>
+                        <p class="example-description">A guesthouse in Pokhara can predict peak booking periods and guest preferences (e.g., meal choices, activity interests) to tailor services and marketing campaigns.</p>
+                    </div>
+                </div>
+                
+                <div class="main-feature-card">
+                    <div class="feature-icon-large chart-icon">📊</div>
+                    <h3 class="feature-title">Financial Forecasting</h3>
+                    <p class="feature-description">Predict future revenue, expenses, and cash flow to make informed financial decisions and improve profitability.</p>
+                    
+                    <div class="feature-example">
+                        <h4 class="example-category">Manufacturing</h4>
+                        <div class="example-image-placeholder">
+                            <img src="static/images/brick.jpg" alt="Manufacturing Example" class="img-features">
+                        </div>
+                        <p class="example-description">A brick kiln owner can forecast revenue based on construction trends and production capacity, helping plan investments and manage finances.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Additional Examples Grid -->
+            <!-- <div class="additional-examples-grid">
+                <div class="example-card">
+                    <h4 class="example-category">Manufacturing</h4>
+                    <div class="example-image-placeholder">
+                        <div class="placeholder-image">Image Placeholder</div>
+                    </div>
+                    <p class="example-description">A small handicraft producer can predict raw material needs based on export order forecasts, optimizing procurement and reducing storage costs.</p>
+                </div>
+                
+                <div class="example-card">
+                    <h4 class="example-category">Retail</h4>
+                    <div class="example-image-placeholder">
+                        <div class="placeholder-image">Image Placeholder</div>
+                    </div>
+                    <p class="example-description">An online bookstore can predict which customers are likely to purchase specific genres, allowing for targeted recommendations and promotions.</p>
+                </div>
+                
+                <div class="example-card">
+                    <h4 class="example-category">Hospitality</h4>
+                    <div class="example-image-placeholder">
+                        <div class="placeholder-image">Image Placeholder</div>
+                    </div>
+                    <p class="example-description">A restaurant owner can forecast daily and weekly revenue based on past sales data and local events, optimizing staffing and inventory.</p>
+                </div>
+            </div> -->
+        </div>
+    </section>
+
+    <!-- Supply Chain Optimization Section -->
+    <section class="supply-chain-section">
+        <div class="container-features">
+            <h2 class="section-title-features">Supply Chain Optimization</h2>
+            <p class="section-subtitle-features">Identify bottlenecks, forecast disruptions, and optimize logistics for a more resilient and efficient supply chain.</p>
+            
+            <div class="optimization-features-grid">
+                <div class="optimization-feature-card">
+                    <div class="feature-icon-large supply-icon">📦</div>
+                    <h3 class="feature-title">Market Trend Analysis</h3>
+                    <p class="feature-description">Analyze local market data and trends to identify opportunities and stay ahead of the competition.</p>
+                    
+                    <div class="use-case-grid">
+                        <div class="use-case-card">
+                            <h4 class="use-case-category">Manufacturing</h4>
+                            <div class="use-case-image-placeholder">
+                               <img src="static/images/tea.jpg" alt="Retail Example" class="img-features">
+                            </div>
+                            <p class="use-case-description">A tea processing factory can predict disruptions in raw tea leaf supply due to weather patterns, allowing for better planning and sourcing.</p>
+                        </div>
+                        
+                        <div class="use-case-card">
+                            <h4 class="use-case-category">Retail</h4>
+                            <div class="use-case-image-placeholder">
+                                <img src="static/images/supermarket.jpg" alt="Retail Example" class="img-features">
+                            </div>
+                            <p class="use-case-description">A supermarket can analyze local purchasing trends to identify popular product categories and optimize stock and promotions.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="optimization-feature-card">
+                    <div class="feature-icon-large production-icon">🏭</div>
+                    <h3 class="feature-title">Production Planning</h3>
+                    <p class="feature-description">Forecast production needs based on predicted demand and resource availability to optimize schedules and minimize costs.</p>
+                    
+                    <div class="use-case-grid">
+                        <div class="use-case-card">
+                            <h4 class="use-case-category">Manufacturing</h4>
+                            <div class="use-case-image-placeholder">
+                                <img src="static/images/furniture.jpg" alt="Manufacturing Example" class="img-features">
+                            </div>
+                            <p class="use-case-description">A furniture maker can predict the required production volume for different furniture types based on sales forecasts, optimizing workshop scheduling.</p>
+                        </div>
+                        
+                        <div class="use-case-card">
+                            <h4 class="use-case-category">Retail</h4>
+                            <div class="use-case-image-placeholder">
+                                <img src="static/images/import.jpg" alt="Retail Example" class="img-features">
+                            </div>
+                            <p class="use-case-description">A distributor of imported goods can predict potential delays at customs or transport routes, optimizing inventory buffers.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Additional Use Cases -->
+            <!-- <div class="additional-use-cases-grid">
+                <div class="use-case-card">
+                    <h4 class="use-case-category">Hospitality</h4>
+                    <div class="use-case-image-placeholder">
+                        <div class="placeholder-image">Image Placeholder</div>
+                    </div>
+                    <p class="use-case-description">A tour operator can analyze booking data and search trends to identify popular tourist destinations and activities.</p>
+                </div>
+                
+                <div class="use-case-card">
+                    <h4 class="use-case-category">Hospitality</h4>
+                    <div class="use-case-image-placeholder">
+                        <div class="placeholder-image">Image Placeholder</div>
+                    </div>
+                    <p class="use-case-description">A bakery can forecast the required quantity of baked goods daily based on demand patterns, reducing waste and ensuring freshness.</p>
+                </div>
+            </div> -->
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <h2 class="cta-title">Start Analyzing Your Business Today</h2>
+            <a href="signup.html" class="btn btn-cta-white">Get Started Free</a>
+        </div>
+    </section>
+
+    <!-- Footer Section -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <div class="logo-icon"></div>
+                    <span class="logo-text">SME Analytics</span>
+                </div>
+                <div class="newsletter">
+                    <h3 class="newsletter-title">Stay updated with the latest insights</h3>
+                    <form class="newsletter-form" id="newsletter-form" method="POST" action="{{ url_for('newsletter') }}">
+    <input type="email" id="email-input" name="email" class="newsletter-input" placeholder="Enter your email">
+    <button type="submit" class="btn btn-primary">Subscribe</button>
+</form>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div class="footer-left">
+                    <select class="language-selector">
+                        <option value="en">English</option>
+                        <option value="ne">नेपाली</option>
+                    </select>
+                </div>
+                <div class="footer-center">
+                    <p class="footer-text">© 2025 SME Analytics</p>
+                </div>
+                <div class="footer-right">
+                    <div class="social-icons">
+                        <a href="#" class="social-icon twitter" aria-label="Twitter"></a>
+                        <a href="#" class="social-icon linkedin" aria-label="LinkedIn"></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

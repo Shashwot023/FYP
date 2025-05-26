@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SME Analytics</title>
+    <meta name="description" content="Predictive insights for inventory, customers, and finances, built for local businesses. Easy to use, affordable, and powerful.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="static/images/logo.png" type="image/x-icon">
+</head>
+<body>
+    <!-- Header Section -->
+    <header class="header">
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="{{ url_for('index') }}" class="logo">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="SME Analytics Logo" class="img-logo">
+                <span class="nav-link-logo active">SME Analytics</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('index') }}" class="nav-link active">Home</a></li>
+                <li><a href="{{ url_for('features_overview') }}" class="nav-link">Feature Overview</a></li> 
+                <li><a href="{{ url_for('contact_us') }}" class="nav-link">Contact Us</a></li>
+            </ul>
+            <div class="nav-buttons">
+                {% if session.get('user_id') %}
+                <a href="{{ url_for('dashboard') }}" class="nav-link">Dashboard</a>
+                <a href="{{ url_for('logout') }}" class="nav-link">Logout</a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="btn btn-secondary">Log In</a>
+                <a href="{{ url_for('signup') }}" class="btn btn-secondary">Sign Up</a>
+            {% endif %}
+            </div>
+        </div>
+    </nav>
+</header>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert {{ 'alert-success' if category == 'success' else 'alert-error' }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    Unlock Growth for <span class="highlight">Nepali SMEs</span> with<br>
+                    No-Code Analytics
+                </h1>
+                <p class="hero-subtitle">
+                    Predictive insights for inventory, customers, and finances, built for local businesses. Easy to use, affordable, and powerful.
+                </p>
+                <button class="btn btn-cta">Get Started Free</button>
+            </div>
+            <div class="hero-image">
+                <div class="dashboard-mockup">
+                    <div class="mockup-screen main-screen">
+                        <div class="chart-container">
+                            <div class="chart-bar" style="height: 60%"></div>
+                            <div class="chart-bar" style="height: 80%"></div>
+                            <div class="chart-bar" style="height: 45%"></div>
+                            <div class="chart-bar" style="height: 90%"></div>
+                        </div>
+                    </div>
+                    <div class="mockup-screen side-screen">
+                        <div class="pie-chart"></div>
+                    </div>
+                    <div class="mockup-screen bottom-screen">
+                        <div class="line-chart"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why SME Analytics Section -->
+    <section class="why-section">
+        <div class="container">
+            <h2 class="section-title">Why SME Analytics?</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon dollar-icon">$</div>
+                    <h3 class="feature-title">Affordable</h3>
+                    <p class="feature-description">Predictive analytics designed for the budgets of growing SMEs in Nepal.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon lightbulb-icon">💡</div>
+                    <h3 class="feature-title">No-Code</h3>
+                    <p class="feature-description">Get powerful insights without writing a single line of code. Simple interface for everyone.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon globe-icon">🌐</div>
+                    <h3 class="feature-title">Local Expertise</h3>
+                    <p class="feature-description">Built with understanding of the Nepalese market and business challenges.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features-section">
+        <div class="container">
+            <h2 class="section-title">Our Powerful Features</h2>
+            
+            <div class="feature-showcase">
+                <div class="feature-content">
+                    <h3 class="feature-showcase-title">Inventory Analytics</h3>
+                    <p class="feature-showcase-description">
+                        Predict demand, optimize stock levels, and reduce waste with smart inventory forecasting tailored for local supply chains.
+                    </p>
+                    <ul class="feature-list">
+                        <li>Reduce overstocking and costs</li>
+                        <li>Prevent stockouts and lost sales</li>
+                        <li>Identify fast-moving items</li>
+                        <li>Improve cash flow management</li>
+                    </ul>
+                </div>
+                <div class="feature-image">
+                    <div class="placeholder-image inventory-placeholder">
+                        <div class="chart-mock">
+                            <div class="bars-container">
+                                <div class="bar orange" style="height: 70%"></div>
+                                <div class="bar blue" style="height: 45%"></div>
+                                <div class="bar green" style="height: 85%"></div>
+                                <div class="bar yellow" style="height: 30%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="feature-showcase reverse">
+                <div class="feature-content">
+                    <h3 class="feature-showcase-title">Customer Analytics</h3>
+                    <p class="feature-showcase-description">
+                        Understand your customer behavior, predict trends, and personalize marketing efforts to increase loyalty and sales.
+                    </p>
+                    <ul class="feature-list">
+                        <li>Identify valuable customer segments</li>
+                        <li>Predict customer churn</li>
+                        <li>Analyze purchasing patterns</li>
+                        <li>Measure marketing campaign effectiveness</li>
+                    </ul>
+                </div>
+                <div class="feature-image">
+                    <div class="placeholder-image customer-placeholder">
+                        <div class="dashboard-grid">
+                            <div class="widget">
+                                <div class="mini-chart"></div>
+                            </div>
+                            <div class="widget">
+                                <div class="pie-mini"></div>
+                            </div>
+                            <div class="widget">
+                                <div class="trend-line"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="feature-showcase">
+                <div class="feature-content">
+                    <h3 class="feature-showcase-title">Financial Forecasting</h3>
+                    <p class="feature-showcase-description">
+                        Gain clarity on your business's financial future with accurate revenue forecasts and expense predictions.
+                    </p>
+                    <ul class="feature-list">
+                        <li>Predict future revenue and expenses</li>
+                        <li>Plan for cash flow needs</li>
+                        <li>Model different business scenarios</li>
+                        <li>Set realistic financial goals</li>
+                    </ul>
+                </div>
+                <div class="feature-image">
+                    <div class="placeholder-image financial-placeholder">
+                        <div class="financial-chart">
+                            <div class="trend-up"></div>
+                            <div class="data-points">
+                                <div class="point"></div>
+                                <div class="point"></div>
+                                <div class="point"></div>
+                                <div class="point"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="testimonials-section">
+        <div class="container">
+            <h2 class="section-title">Hear from Businesses Like Yours</h2>
+            <div class="testimonials-grid">
+                <div class="testimonial-card">
+                    <div class="testimonial-avatar">RS</div>
+                    <h4 class="testimonial-name">Rajesh Sharma</h4>
+                    <p class="testimonial-title">Owner, Sharma Pasal & FMCG</p>
+                    <p class="testimonial-quote">"SME Analytics helped me understand which inventory items sell fastest. Now I stock smarter and waste less!"</p>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-avatar">PS</div>
+                    <h4 class="testimonial-name">Priya Singh</h4>
+                    <p class="testimonial-title">Manager, Himalayan Homestay</p>
+                    <p class="testimonial-quote">"Analyzing customer feedback is easy with SME Analytics. We've improved our services based on their insights."</p>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-avatar">AG</div>
+                    <h4 class="testimonial-name">Amit Gurung</h4>
+                    <p class="testimonial-title">Operations Head, Everest Garments</p>
+                    <p class="testimonial-quote">"Forecasting finances used to be a headache. SME Analytics makes it clear and helps us plan for growth."</p>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-avatar">SR</div>
+                    <h4 class="testimonial-name">Sita Rai</h4>
+                    <p class="testimonial-title">Founder, Clean Administration Services</p>
+                    <p class="testimonial-quote">"No-code analytics seemed impossible for me, but SME Analytics is truly intuitive. A game-changer for my small business."</p>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-avatar">BT</div>
+                    <h4 class="testimonial-name">Binod Thapa</h4>
+                    <p class="testimonial-title">CEO, Nepal Innovations Pvt. Ltd.</p>
+                    <p class="testimonial-quote">"Supporting local tech is important. SME Analytics offers powerful tools at an accessible price point for Nepali businesses."</p>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-avatar">MB</div>
+                    <h4 class="testimonial-name">Maya Bhandari</h4>
+                    <p class="testimonial-title">Manager, Pokhara Cafe & Bakery</p>
+                    <p class="testimonial-quote">"Understanding my customers is key. SME Analytics gives me the data I need to tailor my offerings and marketing."</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call-to-Action Section -->
+    <section class="cta-section">
+        <div class="container">
+            <h2 class="cta-title">Ready to Grow Your Business?</h2>
+            <p class="cta-subtitle">Join SME Analytics today and start making data-driven decisions with confidence.</p>
+            <button class="btn btn-cta-white">Sign Up Now</button>
+        </div>
+    </section>
+
+    <!-- Footer Section -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <div class="logo-icon"></div>
+                    <span class="logo-text">SME Analytics</span>
+                </div>
+                <div class="newsletter">
+                    <h3 class="newsletter-title">Stay updated with the latest insights</h3>
+                    <form class="newsletter-form" id="newsletter-form" method="POST" action="{{ url_for('newsletter') }}">
+    <input type="email" id="email-input" name="email" class="newsletter-input" placeholder="Enter your email">
+    <button type="submit" class="btn btn-primary">Subscribe</button>
+</form>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div class="footer-left">
+                    <select class="language-selector">
+                        <option value="en">English</option>
+                        <option value="ne">नेपाली</option>
+                    </select>
+                </div>
+                <div class="footer-center">
+                    <p class="footer-text">© 2025 SME Analytics</p>
+                </div>
+                <div class="footer-right">
+                    <div class="social-icons">
+                        <a href="#" class="social-icon twitter" aria-label="Twitter"></a>
+                        <a href="#" class="social-icon linkedin" aria-label="LinkedIn"></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

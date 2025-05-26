@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - SME Analytics</title>
+    <meta name="description" content="Create an account to get started with SME Analytics - No-code analytics for Nepali SMEs.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
+    <link rel="icon" href="static/images/logo.png" type="image/x-icon">
+</head>
+<body>
+ <header class="header">
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="{{ url_for('index') }}" class="logo">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="SME Analytics Logo" class="img-logo">
+                <span class="nav-link-logo active">SME Analytics</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('index') }}" class="nav-link ">Home</a></li>
+                <li><a href="{{ url_for('features_overview') }}" class="nav-link">Feature Overview</a></li> 
+                <li><a href="{{ url_for('contact_us') }}" class="nav-link">Contact Us</a></li>
+            </ul>
+            <div class="nav-buttons">
+                {% if session.get('user_id') %}
+                <a href="{{ url_for('dashboard') }}" class="nav-link">Dashboard</a>
+                <a href="{{ url_for('logout') }}" class="nav-link">Logout</a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="btn btn-secondary">Log In</a>
+                <a href="{{ url_for('signup') }}" class="btn btn-secondary">Sign Up</a>
+            {% endif %}
+            </div>
+        </div>
+    </nav>
+</header>
+
+
+    <!-- Sign Up Section -->
+    <section class="signup-section">
+    <div class="container-signup">
+        <div class="signup-container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert {{ 'alert-success' if category == 'success' else 'alert-error' }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            <div class="signup-decorative">
+                <div class="decorative-dots">
+                    <span class="dot dot-teal"></span>
+                    <span class="dot dot-yellow"></span>
+                    <span class="dot dot-pink"></span>
+                    <span class="dot dot-green"></span>
+                </div>
+            </div>
+            <h2 class="signup-title">Create an Account</h2>
+            <p class="signup-subtitle">Enter your details to get started with SME Analytics.</p>
+            <form class="signup-form" method="POST" action="{{ url_for('signup') }}">
+                <div class="form-group">
+                    <label for="name">Your Name*</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email*</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password*</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <div class="form-group">
+                    <label for="business_name">Business Name*</label>
+                    <input type="text" id="business_name" name="business_name" required>
+                </div>
+                <div class="form-group">
+                    <label for="industry">Industry*</label>
+                    <select id="industry" name="industry" required>
+                        <option value="">Select your industry</option>
+                        <option value="Retail">Retail</option>
+                        <option value="Manufacturing">Manufacturing</option>
+                        <option value="Hospitality">Hospitality</option>
+                        <option value="Services">Services</option>
+                        <option value="Agriculture">Agriculture</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="location">Location*</label>
+                    <input type="text" id="location" name="location" required>
+                </div>
+                <div class="form-group checkbox-group">
+                    <input type="checkbox" id="terms" name="terms">
+                    <label for="terms">I have read and agree to the <a href="#" class="terms-link">Terms of Service and Privacy Policy</a>.</label>
+                </div>
+                <p class="signup-footer">Already have an account? <a href="{{ url_for('login') }}" class="terms-link">Log In</a></p>
+                <button type="submit" class="btn btn-cta">Get Started</button>
+            </form>
+        </div>
+    </div>
+</section>
+
+<footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <div class="logo-icon"></div>
+                    <span class="logo-text">SME Analytics</span>
+                </div>
+                <div class="newsletter">
+                    <h3 class="newsletter-title">Stay updated with the latest insights</h3>
+                    <form class="newsletter-form" id="newsletter-form" method="POST" action="{{ url_for('newsletter') }}">
+    <input type="email" id="email-input" name="email" class="newsletter-input" placeholder="Enter your email">
+    <button type="submit" class="btn btn-primary">Subscribe</button>
+</form>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div class="footer-left">
+                    <select class="language-selector">
+                        <option value="en">English</option>
+                        <option value="ne">नेपाली</option>
+                    </select>
+                </div>
+                <div class="footer-center">
+                    <p class="footer-text">© 2025 SME Analytics</p>
+                </div>
+                <div class="footer-right">
+                    <div class="social-icons">
+                        <a href="#" class="social-icon twitter" aria-label="Twitter"></a>
+                        <a href="#" class="social-icon linkedin" aria-label="LinkedIn"></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+</body>
+</html>

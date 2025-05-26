@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us - SME Analytics</title>
+    <meta name="description" content="Get in touch with SME Analytics - we're here to help with your questions and support needs.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
+    <link rel="icon" href="static/images/logo.png" type="image/x-icon">
+</head>
+<body>
+ <header class="header">
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="{{ url_for('index') }}" class="logo">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="SME Analytics Logo" class="img-logo">
+                <span class="nav-link-logo active">SME Analytics</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('index') }}" class="nav-link">Home</a></li>
+                <li><a href="{{ url_for('features_overview') }}" class="nav-link">Feature Overview</a></li> 
+                <li><a href="{{ url_for('contact_us') }}" class="nav-link active">Contact Us</a></li>
+            </ul>
+            <div class="nav-buttons">
+                {% if session.get('user_id') %}
+                <a href="{{ url_for('dashboard') }}" class="nav-link">Dashboard</a>
+                <a href="{{ url_for('logout') }}" class="nav-link">Logout</a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="btn btn-secondary">Log In</a>
+                <a href="{{ url_for('signup') }}" class="btn btn-secondary">Sign Up</a>
+            {% endif %}
+            </div>
+        </div>
+    </nav>
+</header>
+
+<section class="contact-section">
+    <div class="container-contact">
+        <h2 class="section-title-contact">Drop Us a Line</h2>
+        <p class="section-subtitle-contact">Have questions about SME Analytics or need support? Fill out the form or reach out via our contact details.</p>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert {{ 'alert-success' if category == 'success' else 'alert-error' }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <div class="contact-container">
+            <div class="contact-form-container">
+                <h3 class="contact-form-title">Get in Touch</h3>
+                <form class="contact-form" method="POST" action="{{ url_for('contact_us') }}">
+                    <div class="form-group">
+                        <label for="name">Your Name</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Your Email</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="subject">Subject</label>
+                        <input type="text" id="subject" name="subject" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="message">Your Message</label>
+                        <textarea id="message" name="message" rows="5" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-cta">Send Message</button>
+                </form>
+            </div>
+            <div class="contact-details-container">
+                <h3 class="contact-details-title">Contact Details</h3>
+                <div class="contact-details">
+                    <div class="contact-detail-item">
+                        <span class="contact-icon">📍</span>
+                        <div class="contact-info">
+                            <span class="contact-label">Location</span>
+                            <span class="contact-value">Kathmandu, Nepal</span>
+                        </div>
+                    </div>
+                    <div class="contact-detail-item">
+                        <span class="contact-icon">✉️</span>
+                        <div class="contact-info">
+                            <span class="contact-label">Email</span>
+                            <span class="contact-value">info@smeanalytics.com</span>
+                        </div>
+                    </div>
+                    <div class="contact-detail-item">
+                        <span class="contact-icon">📞</span>
+                        <div class="contact-info">
+                            <span class="contact-label">Phone</span>
+                            <span class="contact-value">+977 98XXXXXXXX</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="contact-image">
+                    <div class="contact-placeholder"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <div class="logo-icon"></div>
+                    <span class="logo-text">SME Analytics</span>
+                </div>
+                <div class="newsletter">
+                    <h3 class="newsletter-title">Stay updated with the latest insights</h3>
+                    <form class="newsletter-form" id="newsletter-form" method="POST" action="{{ url_for('newsletter') }}">
+    <input type="email" id="email-input" name="email" class="newsletter-input" placeholder="Enter your email">
+    <button type="submit" class="btn btn-primary">Subscribe</button>
+</form>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div class="footer-left">
+                    <select class="language-selector">
+                        <option value="en">English</option>
+                        <option value="ne">नेपाली</option>
+                    </select>
+                </div>
+                <div class="footer-center">
+                    <p class="footer-text">© 2025 SME Analytics</p>
+                </div>
+                <div class="footer-right">
+                    <div class="social-icons">
+                        <a href="#" class="social-icon twitter" aria-label="Twitter"></a>
+                        <a href="#" class="social-icon linkedin" aria-label="LinkedIn"></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
