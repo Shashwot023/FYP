@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales - SME Analytics</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" href="static/images/logo.png" type="image/x-icon">
+</head>
+<body>
+  <header class="header">
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="{{ url_for('index') }}" class="logo">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="SME Analytics Logo" class="img-logo">
+                <span class="nav-link-logo active">SME Analytics</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('index') }}" class="nav-link ">Home</a></li>
+                <li><a href="{{ url_for('features_overview') }}" class="nav-link">Feature Overview</a></li> 
+                <li><a href="{{ url_for('contact_us') }}" class="nav-link">Contact Us</a></li>
+            </ul>
+            <div class="nav-buttons">
+                {% if session.get('user_id') %}
+                <a href="{{ url_for('dashboard') }}" class="nav-link active">Dashboard</a>
+                <a href="{{ url_for('logout') }}" class="nav-link">Logout</a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="btn btn-secondary">Log In</a>
+                <a href="{{ url_for('signup') }}" class="btn btn-secondary">Sign Up</a>
+            {% endif %}
+            </div>
+        </div>
+    </nav>
+</header>
+
+   <section class="sales-section">
+        <div class="container">
+            <h1>Sales Trend</h1>
+            <div class="metrics-grid">
+                <div class="metrics-card">
+                    <h3>Total Revenue</h3>
+                    <p class="metric-value">${{ "%.2f" | format(sales_metrics.total_revenue) }}</p>
+                    <p class="metric-change green">{{ sales_metrics.revenue_change }}</p>
+                </div>
+                <div class="metrics-card">
+                    <h3>Total Transactions</h3>
+                    <p class="metric-value">{{ sales_metrics.total_transactions }}</p>
+                    <p class="metric-change green">{{ sales_metrics.transactions_change }}</p>
+                </div>
+                <div class="metrics-card">
+                    <h3>Average Transaction</h3>
+                    <p class="metric-value">${{ "%.2f" | format(sales_metrics.avg_transaction) }}</p>
+                    <p class="metric-change green">{{ sales_metrics.avg_transaction_change }}</p>
+                </div>
+                <div class="metrics-card">
+                    <h3>Items Sold</h3>
+                    <p class="metric-value">{{ sales_metrics.items_sold }}</p>
+                    <p class="metric-change green">{{ sales_metrics.items_sold_change }}</p>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3>Sales Trends</h3>
+                <div class="chart-placeholder">[Line Chart: Sales Trends]</div>
+            </div>
+        </div>
+    </section>
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <a href="{{ url_for('index') }}" class="footer-logo">
+                    <span class="logo-text">SME Analytics</span>
+                </a>
+                <div class="newsletter">
+                    <h4 class="newsletter-title">Stay updated with the latest insights</h4>
+                    <form class="newsletter-form" id="newsletter-form" method="POST" action="{{ url_for('newsletter') }}">
+                        <input type="email" id="email-input" name="email" class="newsletter-input" placeholder="Enter your email">
+                        <button type="submit" class="btn btn-primary">Subscribe</button>
+                    </form>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <select class="language-selector">
+                    <option>English</option>
+                    <option>नेपाली</option>
+                </select>
+                <p class="footer-text">© 2025 SME Analytics</p>
+                <div class="social-icons">
+                    <a href="#" class="social-icon">🐦</a>
+                    <a href="#" class="social-icon">💼</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

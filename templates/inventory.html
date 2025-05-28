@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory - SME Analytics</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="header">
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="{{ url_for('index') }}" class="logo">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="SME Analytics Logo" class="img-logo">
+                <span class="nav-link-logo active">SME Analytics</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('index') }}" class="nav-link ">Home</a></li>
+                <li><a href="{{ url_for('features_overview') }}" class="nav-link">Feature Overview</a></li> 
+                <li><a href="{{ url_for('contact_us') }}" class="nav-link">Contact Us</a></li>
+            </ul>
+            <div class="nav-buttons">
+                {% if session.get('user_id') %}
+                <a href="{{ url_for('dashboard') }}" class="nav-link active">Dashboard</a>
+                <a href="{{ url_for('logout') }}" class="nav-link">Logout</a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="btn btn-secondary">Log In</a>
+                <a href="{{ url_for('signup') }}" class="btn btn-secondary">Sign Up</a>
+            {% endif %}
+            </div>
+        </div>
+    </nav>
+</header>
+
+<section class="inventory-section">
+        <div class="container">
+            <h1>Inventory Overview</h1>
+            <!-- Add flash message display -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for category, message in messages %}
+                            <div class="flash {{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+            <div class="metrics-grid">
+                <div class="metrics-card">
+                    <h3>Total Inventory Items</h3>
+                    <p class="metric-value">{{ total_items }}</p>
+                </div>
+                <div class="metrics-card">
+                    <h3>Total Stock Quantity</h3>
+                    <p class="metric-value">{{ total_stock }}</p>
+                </div>
+                <div class="metrics-card">
+                    <h3>Inventory Value</h3>
+                    <p class="metric-value">${{ "%.2f" | format(inventory_value) }}</p>
+                </div>
+                <div class="metrics-card">
+                    <h3>Low Stock Alerts</h3>
+                    <p class="metric-value {{ 'red' if low_stock > 0 else '' }}">{{ low_stock }}</p>
+                    <p class="metric-change">{{ "%.1f" | format((low_stock / total_items * 100) if total_items > 0 else 0) }}% of items</p>
+                </div>
+                <div class="metrics-card">
+                    <h3>Out of Stock</h3>
+                    <p class="metric-value {{ 'red' if out_of_stock > 0 else '' }}">{{ out_of_stock }}</p>
+                    <p class="metric-change {{ 'red' if out_of_stock > 0 else '' }}">Immediate action needed</p>
+                </div>
+                <div class="metrics-card">
+                    <h3>On Backorder</h3>
+                    <p class="metric-value">{{ on_backorder }}</p>
+                    <p class="metric-change">{{ on_backorder }} items pending</p>
+                </div>
+            </div>
+            <div class="inventory-controls">
+                <input type="text" placeholder="Search Inventory (Name, SKU, Category)..." class="search-bar">
+                <button class="add-item-btn" onclick="toggleAddItemForm()">Add New Item</button>
+            </div>
+            <div class="add-item-form" id="addItemForm" style="display: none;">
+                <h3>Add New Inventory Item</h3>
+                <form action="/add-inventory-item" method="POST">
+                    <label for="name">Product Name:</label>
+                    <input type="text" id="name" name="name" required>
+                    
+                    <label for="category">Category:</label>
+                    <select id="category" name="category" required>
+                        <option value="Grocery">Grocery</option>
+                        <option value="Tech">Tech</option>
+                        <option value="Daily Essentials">Daily Essentials</option>
+                        <option value="Clothing">Clothing</option>
+                        <option value="Home Appliances">Home Appliances</option>
+                    </select>
+                    
+                    <label for="stock">Stock:</label>
+                    <input type="number" id="stock" name="stock" min="0" required>
+                    
+                    <label for="price">Price (per unit, $):</label>
+                    <input type="number" id="price" name="price" step="0.01" min="0" required>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="submit-btn">Add Item</button>
+                        <button type="button" class="cancel-btn" onclick="toggleAddItemForm()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+            <div class="chart-card">
+                <h3>Current Inventory Items</h3>
+                <p>Stock levels for key inventory items.</p>
+                <table>
+                    <tr>
+                        <th>SKU</th>
+                        <th>Product Name</th>
+                        <th>Category</th>
+                        <th>Stock</th>
+                        <th>Price</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                    {% for item in inventory_items %}
+                    <tr data-id="{{ item.id }}">
+                        <td class="sku">{{ item.sku }}</td>
+                        <td>
+                            <span class="view-mode">{{ item.name }}</span>
+                            <input type="text" name="name" value="{{ item.name }}" class="edit-mode" style="display: none;" required>
+                        </td>
+                        <td>
+                            <span class="view-mode">{{ item.category }}</span>
+                            <select name="category" class="edit-mode" style="display: none;" required>
+                                <option value="Grocery" {% if item.category == "Grocery" %}selected{% endif %}>Grocery</option>
+                                <option value="Tech" {% if item.category == "Tech" %}selected{% endif %}>Tech</option>
+                                <option value="Daily Essentials" {% if item.category == "Daily Essentials" %}selected{% endif %}>Daily Essentials</option>
+                                <option value="Clothing" {% if item.category == "Clothing" %}selected{% endif %}>Clothing</option>
+                                <option value="Home Appliances" {% if item.category == "Home Appliances" %}selected{% endif %}>Home Appliances</option>
+                            </select>
+                        </td>
+                        <td>
+                            <span class="view-mode">{{ item.stock }}</span>
+                            <input type="number" name="stock" value="{{ item.stock }}" min="0" class="edit-mode" style="display: none;" required>
+                        </td>
+                        <td>
+                            <span class="view-mode">${{ "%.2f" | format(item.price) }}</span>
+                            <input type="number" name="price" value="{{ item.price }}" step="0.01" min="0" class="edit-mode" style="display: none;" required>
+                        </td>
+                        <td>
+                            <form action="/update-inventory-status" method="POST" style="display:inline;">
+                                <input type="hidden" name="item_id" value="{{ item.id }}">
+                                <select name="status" onchange="this.form.submit()">
+                                    <option value="Pending" {% if item.status == "Pending" %}selected{% endif %}>Pending</option>
+                                    <option value="In Progress" {% if item.status == "In Progress" %}selected{% endif %}>In Progress</option>
+                                    <option value="Completed" {% if item.status == "Completed" %}selected{% endif %}>Completed</option>
+                                </select>
+                            </form>
+                        </td>
+                        <td>
+                            <button type="button" class="action-btn edit-btn view-mode">Edit</button>
+                            <form action="/update-inventory-item" method="POST" class="edit-mode" style="display: none; margin: 0;">
+                                <input type="hidden" name="item_id" value="{{ item.id }}">
+                                <button type="submit" class="action-btn save-btn">Save</button>
+                                <button type="button" class="action-btn cancel-btn">Cancel</button>
+                            </form>
+                            <form action="/delete-inventory-item" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this item?');">
+                                <input type="hidden" name="item_id" value="{{ item.id }}">
+                                <button type="submit" class="action-btn delete-btn">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+    </section>
+
+
+     <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <a href="{{ url_for('index') }}" class="footer-logo">
+                    <span class="logo-text">SME Analytics</span>
+                </a>
+                <div class="newsletter">
+                    <h4 class="newsletter-title">Stay updated with the latest insights</h4>
+                    <form class="newsletter-form" id="newsletter-form" method="POST" action="{{ url_for('newsletter') }}">
+                        <input type="email" id="email-input" name="email" class="newsletter-input" placeholder="Enter your email">
+                        <button type="submit" class="btn btn-primary">Subscribe</button>
+                    </form>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <select class="language-selector">
+                    <option>English</option>
+                    <option>नेपाली</option>
+                </select>
+                <p class="footer-text">© 2025 SME Analytics</p>
+                <div class="social-icons">
+                    <a href="#" class="social-icon">🐦</a>
+                    <a href="#" class="social-icon">💼</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM fully loaded, attaching event listeners...');
+
+            // Delegate event listeners to handle dynamic content
+            document.querySelector('table').addEventListener('click', function(e) {
+                const button = e.target.closest('.edit-btn, .cancel-btn, .save-btn');
+                if (!button) return;
+
+                const row = button.closest('tr');
+                const itemId = row.dataset.id;
+
+                if (button.classList.contains('edit-btn')) {
+                    console.log('Edit button clicked for row ID:', itemId);
+                    row.querySelectorAll('.view-mode').forEach(el => {
+                        el.style.display = 'none';
+                        console.log('Hidden view-mode element:', el);
+                    });
+                    row.querySelectorAll('.edit-mode').forEach(el => {
+                        el.style.display = 'inline-block';
+                        console.log('Shown edit-mode element:', el);
+                    });
+                } else if (button.classList.contains('cancel-btn')) {
+                    console.log('Cancel button clicked for row ID:', itemId);
+                    row.querySelectorAll('.view-mode').forEach(el => {
+                        el.style.display = 'inline-block';
+                        console.log('Shown view-mode element:', el);
+                    });
+                    row.querySelectorAll('.edit-mode').forEach(el => {
+                        el.style.display = 'none';
+                        console.log('Hidden edit-mode element:', el);
+                    });
+                    // Reset inputs to original values
+                    row.querySelectorAll('.edit-mode input, .edit-mode select').forEach(input => {
+                        const originalValue = input.closest('td').querySelector('.view-mode').textContent;
+                        if (input.tagName === 'SELECT') {
+                            Array.from(input.options).forEach(option => {
+                                option.selected = option.value === originalValue || (input.name === 'price' && option.value === originalValue.replace('$', ''));
+                            });
+                        } else if (input.name === 'price') {
+                            input.value = parseFloat(originalValue.replace('$', '')).toFixed(2);
+                        } else {
+                            input.value = originalValue;
+                        }
+                    });
+                }
+                // Save button handled by form submission
+            });
+
+            function toggleAddItemForm() {
+                const form = document.getElementById('addItemForm');
+                form.style.display = form.style.display === 'none' ? 'block' : 'none';
+            }
+        });
+    </script>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

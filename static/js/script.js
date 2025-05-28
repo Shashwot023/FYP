@@ -268,5 +268,16 @@ loginForm.addEventListener('submit', (e) => {
     }
 });
 
+function toggleAddItemForm() {
+            const form = document.getElementById('addItemForm');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+
+button.addEventListener('click', function() {
+    console.log('Edit mode inputs:', row.querySelectorAll('.edit-mode input, .edit-mode select'));
+});
+
+
+
 console.log('%c🚀 Welcome to SME Analytics!', 'color: #26A69A; font-size: 16px; font-weight: bold;');
 console.log('%cEmpowering Nepali SMEs with no-code analytics since 2025', 'color: #666; font-size: 12px;');

@@ -3,14 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - SME Analytics</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <title>SME Analytics Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Header Section -->
-
- <header class="header">
+       <header class="header">
     <nav class="navbar">
         <div class="nav-container">
             <a href="{{ url_for('index') }}" class="logo">
@@ -18,7 +15,7 @@
                 <span class="nav-link-logo active">SME Analytics</span>
             </a>
             <ul class="nav-links">
-                <li><a href="{{ url_for('index') }}" class="nav-link">Home</a></li>
+                <li><a href="{{ url_for('index') }}" class="nav-link ">Home</a></li>
                 <li><a href="{{ url_for('features_overview') }}" class="nav-link">Feature Overview</a></li> 
                 <li><a href="{{ url_for('contact_us') }}" class="nav-link">Contact Us</a></li>
             </ul>
@@ -35,40 +32,96 @@
     </nav>
 </header>
 
-    <!-- Dashboard Section -->
     <section class="dashboard-section">
-        <div class="container">
-            <div class="dashboard-decorative">
-                <div class="decorative-dots">
-                    <div class="dot dot-teal"></div>
-                    <div class="dot dot-yellow"></div>
-                    <div class="dot dot-pink"></div>
-                    <div class="dot dot-green"></div>
-                </div>
-            </div>
+        <div class="container-dash">
+           
             <div class="dashboard-container">
                 <h1 class="dashboard-title">Welcome, {{ user[1] }}!</h1>
-<p class="dashboard-subtitle">Your business insights are below.</p>
-<div class="analytics-grid">
-    <div class="analytics-card">
-        <h3 class="analytics-title">Business Name</h3>
-        <p class="analytics-value">{{ user[3] }}</p>
-    </div>
-    <div class="analytics-card">
-        <h3 class="analytics-title">Industry</h3>
-        <p class="analytics-value">{{ user[4] }}</p>
-    </div>
-    <div class="analytics-card">
-        <h3 class="analytics-title">Location</h3>
-        <p class="analytics-value">{{ user[5] }}</p>
-    </div>
-</div>
+                <p class="dashboard-subtitle">Your business insights are below.</p>
+                <!-- <div class="analytics-grid">
+                    <div class="analytics-card">
+                        <h3 class="analytics-title">Business Name</h3>
+                        <p class="analytics-value">{{ user[3] }}</p>
+                    </div>
+                    <div class="analytics-card">
+                        <h3 class="analytics-title">Industry</h3>
+                        <p class="analytics-value">{{ user[4] }}</p>
+                    </div>
+                    <div class="analytics-card">
+                        <h3 class="analytics-title">Location</h3>
+                        <p class="analytics-value">{{ user[5] }}</p>
+                    </div>
+                </div> -->
+                <div class="metrics-grid">
+                    <div class="metrics-card">
+                        <h3>Total Revenue</h3>
+                        <p class="metric-value">$250,000 <span class="metric-change green">+20% from last month</span></p>
+                    </div>
+                    <div class="metrics-card">
+                        <h3>Customers Acquired</h3>
+                        <p class="metric-value">1,250 <span class="metric-change green">+15% from last month</span></p>
+                    </div>
+                    <div class="metrics-card">
+                        <h3>Current Inventory Value</h3>
+                        <p class="metric-value">$85,000 <span class="metric-change red">-5.2% from last month</span></p>
+                    </div>
+                </div>
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <a href="{{ url_for('sales') }}" class="nav-link"> <h3>Sales Trend</h3></a>
+                        <p>Monthly sales performance across different sectors in Nepal.</p>
+                        <div class="chart-placeholder">[Line Chart: Sales Trends by Sector]</div>
+                    </div>
+                    <div class="chart-card">
+                       <a href="{{ url_for('inventory') }}" class="nav-link"> <h3>Current Inventory Items</h3></a>
+                        <p>Stock levels for key inventory items.</p>
+                    <table>
+                        <tr>
+                            <th>Product Name</th>
+                            <th>Category</th>
+                            <th>Stock</th>
+                            <th>Price</th>
+                        </tr>
+                         {% for item in inventory_items %}
+                        <tr>
+                            <td>{{ item.name }}</td>
+                            <td>{{ item.category }}</td>
+                            <td>{{ item.stock }}</td>
+                            <td>${{ "%.2f" | format(item.price) }}</td>
+                        </tr>
+                        {% endfor %}
+                </table>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Inventory Stock Levels</h3>
+                        <p>Monthly trend of total inventory units.</p>
+                        <div class="chart-placeholder">[Line Chart: Inventory Stock Levels]</div>
+                    </div>
+                    
+                    <div class="chart-card">
+                        <h3>Customer Segmentation</h3>
+                        <p>New vs. Repeat customers acquired monthly.</p>
+                        <div class="chart-placeholder">[Bar Chart: Customer Segmentation]</div>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Recent Expenses</h3>
+                        <table>
+                            <tr><th>Date</th><th>Description</th><th>Amount</th><th>Category</th></tr>
+                            <tr><td>2024-07-20</td><td>Raw Material Purchase</td><td>$1,500</td><td>Manufacturing</td></tr>
+                            <tr><td>2024-07-19</td><td>Marketing Campaign Ad Spend</td><td>$300</td><td>Marketing</td></tr>
+                            <tr><td>2024-07-18</td><td>Utility Bill</td><td>$150</td><td>Operations</td></tr>
+                            <tr><td>2024-07-17</td><td>Office Supplies</td><td>$50</td><td>Administration</td></tr>
+                            <tr><td>2024-07-16</td><td>Consultancy Fee</td><td>$1,000</td><td>Consulting</td></tr>
+                            <tr><td>2024-07-15</td><td>Transportation Costs</td><td>$120</td><td>Logistics</td></tr>
+                        </table>
+                    </div>
+                    
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- Footer Section -->
-     <footer class="footer">
+    <footer class="footer">
         <div class="container">
             <div class="footer-content">
                 <div class="footer-logo">
@@ -103,7 +156,7 @@
         </div>
     </footer>
 
-   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>

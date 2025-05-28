@@ -1395,7 +1395,7 @@ html {
 }
 
 .dashboard-section {
-    padding: 4rem 2rem;
+    padding: 1rem 2rem;
     background-color: #fff;
     font-family: 'Roboto', sans-serif;
     min-height: 100vh;
@@ -1410,7 +1410,7 @@ html {
     border-radius: 10px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     width: 100%;
-    max-width: 800px;
+    max-width: 1200px;
 }
 
 .dashboard-title {
@@ -1491,4 +1491,594 @@ html {
     .analytics-card {
         width: 100%;
     }
+}
+
+
+        /* Existing styles assumed to be in styles.css */
+        /* Adding new styles for the dashboard section */
+        .dashboard-section { 
+    padding: 50px; 
+    background: #f9f9f9; 
+}
+
+.container-dash { 
+    max-width: 2200px; 
+    margin: auto; 
+    position: relative; 
+}
+
+.dashboard-decorative { 
+    position: absolute; 
+    top: 10px; 
+    left: 10px; 
+}
+
+.decorative-dots { 
+    display: flex; 
+    gap: 5px; 
+}
+
+.dot { 
+    width: 10px; 
+    height: 10px; 
+    border-radius: 50%; 
+}
+
+.dot-teal { 
+    background: #4ecdc4; 
+}
+
+.dot-yellow { 
+    background: #ffd700; 
+}
+
+.dot-pink { 
+    background: #ff6f61; 
+}
+
+.dot-green { 
+    background: #45b7d1; 
+}
+
+.dashboard-container { 
+    padding: 10px; 
+    background: white; 
+    border-radius: 8px; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+}
+
+.dashboard-title { 
+    font-size: 24px; 
+    margin-bottom: 10px; 
+}
+
+.dashboard-subtitle { 
+    color: #666; 
+    margin-bottom: 20px; 
+}
+
+.analytics-grid, .metrics-grid, .charts-grid { 
+    display: grid; 
+    gap: 20px; 
+}
+
+.analytics-grid { 
+    grid-template-columns: repeat(3, 1fr); 
+}
+
+.analytics-grid { 
+    display: flexbox; 
+    gap: 1rem; 
+    padding-bottom: 4rem; 
+}
+
+.metrics-grid { 
+    grid-template-columns: repeat(3, 1fr); 
+    margin: 20px 0; 
+}
+
+.charts-grid { 
+    grid-template-columns: repeat(2, 1fr); 
+}
+
+.analytics-card, .metrics-card, .chart-card { 
+    padding: 15px; 
+    border: 1px solid #ddd; 
+    border-radius: 8px; 
+}
+
+.analytics-title { 
+    font-size: 16px; 
+    color: #333; 
+}
+
+.analytics-value { 
+    font-size: 18px; 
+    font-weight: bold; 
+}
+
+.metric-value { 
+    font-size: 18px; 
+    font-weight: bold; 
+}
+
+.metric-change { 
+    font-size: 14px; 
+}
+
+.metric-change.green { 
+    color: #2ecc71; 
+}
+
+.metric-change.red { 
+    color: #e74c3c; 
+}
+
+table { 
+    width: 100%; 
+    border-collapse: collapse; 
+}
+
+th, td { 
+    padding: 10px; 
+    text-align: left; 
+    border-bottom: 1px solid #ddd; 
+}
+
+th { 
+    background: #f4f4f4; 
+}
+
+.status-in-stock { 
+    color: #2ecc71; 
+}
+
+.status-low-stock { 
+    color: #f39c12; 
+}
+
+.status-out-stock { 
+    color: #e74c3c; 
+}
+
+.chart-placeholder { 
+    text-align: center; 
+    color: #999; 
+    padding: 20px; 
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .dashboard-section { padding: 30px; }
+    .container-dash { max-width: 100%; padding: 0 20px; }
+    .analytics-grid, .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+    .charts-grid { grid-template-columns: 1fr; }
+    .dashboard-title { font-size: 20px; }
+    .analytics-title { font-size: 14px; }
+    .analytics-value, .metric-value { font-size: 16px; }
+    .metric-change { font-size: 12px; }
+    table { font-size: 14px; }
+}
+
+@media (max-width: 768px) {
+    .analytics-grid, .metrics-grid { grid-template-columns: 1fr; }
+    .dashboard-container { padding: 15px; }
+    .dashboard-title { font-size: 18px; }
+    .dashboard-subtitle { font-size: 14px; }
+    .analytics-title { font-size: 12px; }
+    .analytics-value, .metric-value { font-size: 14px; }
+    .metric-change { font-size: 10px; }
+    th, td { padding: 8px; font-size: 12px; }
+}
+
+@media (max-width: 480px) {
+    .dashboard-section { padding: 20px; }
+    .dashboard-container { padding: 10px; }
+    .dashboard-title { font-size: 16px; }
+    .dashboard-subtitle { font-size: 12px; }
+    .analytics-grid, .metrics-grid, .charts-grid { gap: 10px; }
+    .analytics-title { font-size: 10px; }
+    .analytics-value, .metric-value { font-size: 12px; }
+    .metric-change { font-size: 8px; }
+    th, td { padding: 5px; font-size: 10px; }
+    .chart-placeholder { padding: 10px; }
+}
+
+.dashboard-section { 
+    padding: 50px; 
+    background: #f9f9f9; 
+}
+
+.container-dash { 
+    max-width: 2000px; 
+    margin: auto; 
+    position: relative; 
+}
+
+.dashboard-decorative { 
+    position: absolute; 
+    top: 10px; 
+    left: 10px; 
+}
+
+.decorative-dots { 
+    display: flex; 
+    gap: 5px; 
+}
+
+.dot { 
+    width: 10px; 
+    height: 10px; 
+    border-radius: 50%; 
+}
+
+.dot-teal { 
+    background: #4ecdc4; 
+}
+
+.dot-yellow { 
+    background: #ffd700; 
+}
+
+.dot-pink { 
+    background: #ff6f61; 
+}
+
+.dot-green { 
+    background: #45b7d1; 
+}
+
+.dashboard-container { 
+    padding: 20px; 
+    background: white; 
+    border-radius: 8px; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+}
+
+.dashboard-title { 
+    font-size: 24px; 
+    margin-bottom: 10px; 
+}
+
+.dashboard-subtitle { 
+    color: #666; 
+    margin-bottom: 20px; 
+}
+
+.analytics-grid, .metrics-grid, .charts-grid { 
+    display: grid; 
+    gap: 20px; 
+}
+
+.analytics-grid { 
+    grid-template-columns: repeat(3, 1fr); 
+}
+
+.analytics-grid { 
+    display: flexbox; 
+    gap: 1rem; 
+    padding-bottom: 4rem; 
+}
+
+.metrics-grid { 
+    grid-template-columns: repeat(3, 1fr); 
+    margin: 20px 0; 
+}
+
+.charts-grid { 
+    grid-template-columns: repeat(2, 1fr); 
+}
+
+.analytics-card, .metrics-card, .chart-card { 
+    padding: 15px; 
+    border: 1px solid #ddd; 
+    border-radius: 8px; 
+}
+
+.analytics-title { 
+    font-size: 16px; 
+    color: #333; 
+}
+
+.analytics-value { 
+    font-size: 18px; 
+    font-weight: bold; 
+}
+
+.metric-value { 
+    font-size: 18px; 
+    font-weight: bold; 
+}
+
+.metric-change { 
+    font-size: 14px; 
+}
+
+.metric-change.green { 
+    color: #2ecc71; 
+}
+
+.metric-change.red { 
+    color: #e74c3c; 
+}
+
+table { 
+    width: 100%; 
+    border-collapse: collapse; 
+}
+
+th, td { 
+    padding: 10px; 
+    text-align: left; 
+    border-bottom: 1px solid #ddd; 
+}
+
+th { 
+    background: #f4f4f4; 
+}
+
+.status-in-stock { 
+    color: #2ecc71; 
+}
+
+.status-low-stock { 
+    color: #f39c12; 
+}
+
+.status-out-stock { 
+    color: #e74c3c; 
+}
+
+.chart-placeholder { 
+    text-align: center; 
+    color: #999; 
+    padding: 20px; 
+}
+
+.inventory-section, .sales-section {
+    padding: 50px;
+    background: #f9f9f9;
+}
+
+.container {
+    max-width: 1200px;
+    margin: auto;
+}
+
+.inventory-section h1, .sales-section h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+.inventory-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 20px 0;
+}
+
+.search-bar {
+    padding: 10px;
+    width: 70%;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.add-item-btn {
+    padding: 10px 20px;
+    background: #2ecc71;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.add-item-btn:hover {
+    background: #27ae60;
+}
+
+/* New styles for the Add Item form */
+.add-item-form {
+    background: white;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.add-item-form h3 {
+    font-size: 18px;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.add-item-form form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.add-item-form label {
+    font-size: 14px;
+    color: #333;
+}
+
+.add-item-form input,
+.add-item-form select {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.add-item-form input[type="number"] {
+    width: 100%;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.submit-btn {
+    padding: 10px 20px;
+    background: #2ecc71;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.submit-btn:hover {
+    background: #27ae60;
+}
+
+.cancel-btn {
+    padding: 10px 20px;
+    background: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.cancel-btn:hover {
+    background: #c0392b;
+}
+
+/* Responsive design */
+@media (max-width: 1024px) {
+    .dashboard-section { padding: 30px; }
+    .container-dash { max-width: 100%; padding: 0 20px; }
+    .analytics-grid, .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+    .charts-grid { grid-template-columns: 1fr; }
+    .dashboard-title { font-size: 20px; }
+    .analytics-title { font-size: 14px; }
+    .analytics-value, .metric-value { font-size: 16px; }
+    .metric-change { font-size: 12px; }
+    table { font-size: 14px; }
+    .inventory-section, .sales-section { padding: 30px; }
+    .container { max-width: 100%; padding: 0 20px; }
+    .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+    .inventory-section h1, .sales-section h1 { font-size: 20px; }
+}
+
+@media (max-width: 768px) {
+    .analytics-grid, .metrics-grid { grid-template-columns: 1fr; }
+    .dashboard-container { padding: 15px; }
+    .dashboard-title { font-size: 18px; }
+    .dashboard-subtitle { font-size: 14px; }
+    .analytics-title { font-size: 12px; }
+    .analytics-value, .metric-value { font-size: 14px; }
+    .metric-change { font-size: 10px; }
+    th, td { padding: 8px; font-size: 12px; }
+    .metrics-grid { grid-template-columns: 1fr; }
+    .inventory-controls { flex-direction: column; gap: 10px; }
+    .search-bar { width: 100%; }
+    .inventory-section h1, .sales-section h1 { font-size: 18px; }
+}
+
+@media (max-width: 480px) {
+    .dashboard-section { padding: 20px; }
+    .dashboard-container { padding: 10px; }
+    .dashboard-title { font-size: 16px; }
+    .dashboard-subtitle { font-size: 12px; }
+    .analytics-grid, .metrics-grid, .charts-grid { gap: 10px; }
+    .analytics-title { font-size: 10px; }
+    .analytics-value, .metric-value { font-size: 12px; }
+    .metric-change { font-size: 8px; }
+    th, td { padding: 5px; font-size: 10px; }
+    .chart-placeholder { padding: 10px; }
+    .inventory-section, .sales-section { padding: 20px; }
+    .inventory-section h1, .sales-section h1 { font-size: 16px; }
+    .search-bar, .add-item-btn { font-size: 12px; }
+}
+
+/* Existing styles remain unchanged */
+/* Add styles for flash messages */
+.flash-messages {
+    margin: 10px 0;
+}
+
+.flash {
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+.flash.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.flash.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Add styles for action buttons */
+.action-btn {
+    display: inline-block;
+    padding: 5px 10px;
+    margin-right: 5px;
+    text-decoration: none;
+    color: #fff;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.action-btn:hover {
+    opacity: 0.9;
+}
+
+.edit-btn {
+    background-color: #007bff;
+}
+
+.save-btn {
+    background-color: #28a745;
+}
+
+.cancel-btn {
+    background-color: #6c757d;
+}
+
+.delete-btn {
+    background-color: #dc3545;
+}
+
+/* Add styles for in-place editing in the table */
+table td input[type="text"],
+table td input[type="number"],
+table td select {
+    width: 100%;
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+table td input[type="number"] {
+    max-width: 100px;
+}
+
+table td select {
+    max-width: 150px;
+}
+
+table td form select {
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    width: 100%;
+    max-width: 150px;
 }
