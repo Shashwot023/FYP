@@ -2055,30 +2055,76 @@ th {
 }
 
 /* Add styles for in-place editing in the table */
-table td input[type="text"],
-table td input[type="number"],
-table td select {
+.dataTables_wrapper {
     width: 100%;
-    padding: 5px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 14px;
-    box-sizing: border-box;
+    overflow-x: auto;
 }
 
-table td input[type="number"] {
-    max-width: 100px;
-}
-
-table td select {
-    max-width: 150px;
-}
-
-table td form select {
-    padding: 5px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 14px;
+table.display {
     width: 100%;
-    max-width: 150px;
+    border-collapse: collapse;
+    margin: 1rem 0;
+}
+
+table.display th,
+table.display td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    table.display {
+        font-size: 0.9rem;
+    }
+
+    table.display th,
+    table.display td {
+        padding: 0.5rem;
+    }
+
+    .dataTables_length,
+    .dataTables_filter {
+        text-align: left;
+        margin-bottom: 0.5rem;
+    }
+
+    .dataTables_paginate {
+        margin-top: 0.5rem;
+    }
+}
+
+/* Ensure action buttons are visible */
+.action-btn {
+    padding: 0.3rem 0.6rem;
+    margin-right: 0.3rem;
+    font-size: 0.9rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.edit-btn {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+}
+
+.delete-btn {
+    background-color: #f44336;
+    color: white;
+    border: none;
+}
+
+.save-btn {
+    background-color: #2196F3;
+    color: white;
+    border: none;
+}
+
+.cancel-btn {
+    background-color: #ff9800;
+    color: white;
+    border: none;
 }

@@ -4,6 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import uuid
 import re
 from datetime import datetime, timedelta
+from flask import jsonify, request
 
 app = Flask(__name__)
 app.secret_key = '05cfe106218586fd598df4bbdba0b334'  
@@ -85,48 +86,126 @@ def determine_status(stock):
     return "Pending"  # Kept for compatibility, but overridden by form selection
 
 # Helper function to seed initial data (for demonstration purposes)
-def seed_data():
-    conn = sqlite3.connect('database.db')
-    c = conn.cursor()
+# def seed_data():
+#     conn = sqlite3.connect('database.db')
+#     c = conn.cursor()
     
-    # Check if a user exists, if not, create one
-    c.execute('SELECT COUNT(*) FROM users')
-    if c.fetchone()[0] == 0:
-        user_id = str(uuid.uuid4())
-        c.execute('''
-            INSERT INTO users (id, name, email, password, business_name, industry, location)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        ''', (user_id, "John Doe", "john@example.com", generate_password_hash("password123"), "Tech Solutions", "Electronics", "Kathmandu"))
+#     # Check if a user exists, if not, create one
+#     c.execute('SELECT COUNT(*) FROM users')
+#     if c.fetchone()[0] == 0:
+#         user_id = str(uuid.uuid4())
+#         c.execute('''
+#             INSERT INTO users (id, name, email, password, business_name, industry, location)
+#             VALUES (?, ?, ?, ?, ?, ?, ?)
+#         ''', (user_id, "John Doe", "john@example.com", generate_password_hash("password123"), "Tech Solutions", "Electronics", "Kathmandu"))
         
-        # Seed inventory data with new status options
-        inventory_items = [
-            (str(uuid.uuid4()), user_id, "LAP-P-2023", "Laptop Pro", "Tech", 50, 1200.00, "In Progress"),
-            (str(uuid.uuid4()), user_id, "KB-MECH-BLU", "Mechanical Keyboard", "Tech", 15, 85.00, "Pending"),
-            (str(uuid.uuid4()), user_id, "MSE-WIRE-BLK", "Wireless Mouse", "Tech", 5, 25.00, "Completed"),
-            (str(uuid.uuid4()), user_id, "SSD-EXT-1TB", "External SSD 1TB", "Tech", 30, 99.99, "In Progress"),
-            (str(uuid.uuid4()), user_id, "USB-USBC-THN", "USB-C Hub", "Tech", 0, 45.00, "Pending"),
+#         # Seed inventory data with new status options
+#         inventory_items = [
+#             (str(uuid.uuid4()), user_id, "LAP-P-2023", "Laptop Pro", "Tech", 50, 1200.00, "In Progress"),
+#             (str(uuid.uuid4()), user_id, "KB-MECH-BLU", "Mechanical Keyboard", "Tech", 15, 85.00, "Pending"),
+#             (str(uuid.uuid4()), user_id, "MSE-WIRE-BLK", "Wireless Mouse", "Tech", 5, 25.00, "Completed"),
+#             (str(uuid.uuid4()), user_id, "SSD-EXT-1TB", "External SSD 1TB", "Tech", 30, 99.99, "In Progress"),
+#             (str(uuid.uuid4()), user_id, "USB-USBC-THN", "USB-C Hub", "Tech", 0, 45.00, "Pending"),
+#         ]
+#         for item in inventory_items:
+#             c.execute('''
+#                 INSERT INTO inventory (id, user_id, sku, name, category, stock, price, status)
+#                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+#             ''', item)
+
+#         # Seed sales data for the last 60 days
+#         today = datetime.now()
+#         for i in range(60):
+#             date = today - timedelta(days=i)
+#             transaction_amount = 500 + (i * 10)  # Example: increasing trend
+#             items_sold = 50 + (i * 2)
+#             c.execute('''
+#                 INSERT INTO sales (id, user_id, transaction_amount, items_sold, created_at)
+#                 VALUES (?, ?, ?, ?, ?)
+#             ''', (str(uuid.uuid4()), user_id, transaction_amount, items_sold, date))
+
+#     conn.commit()
+#     conn.close()
+
+# seed_data()
+
+@app.route('/get_datatables_inventory', methods=['GET'])
+def get_datatables_inventory():
+    try:
+        # Check if user is authenticated
+        if not session.get('user_id'):
+            return jsonify({'error': 'Unauthorized'}), 401
+
+        # Database connection
+        conn = sqlite3.connect('database.db')
+        cursor = conn.cursor()
+
+        # Get DataTables parameters
+        draw = int(request.args.get('draw', 1))
+        start = int(request.args.get('start', 0))
+        length = int(request.args.get('length', 10))
+        search_value = request.args.get('search[value]', '')
+        order_column = request.args.get('order[0][column]', '0')
+        order_dir = request.args.get('order[0][dir]', 'asc')
+
+        # Map column indices to database column names
+        columns = ['sku', 'name', 'category', 'stock', 'price', 'status']
+        order_column_name = columns[int(order_column)]
+
+        # Build the base query
+        query = "SELECT id, sku, name, category, stock, price, status FROM inventory WHERE user_id = ?"
+        params = [session['user_id']]
+
+        # Apply search filter
+        if search_value:
+            query += " AND (sku LIKE ? OR name LIKE ? OR category LIKE ? OR stock LIKE ? OR price LIKE ? OR status LIKE ?)"
+            params.extend(['%' + search_value + '%'] * 6)
+
+        # Total records without filtering
+        total_records_query = "SELECT COUNT(*) FROM inventory WHERE user_id = ?"
+        total_records = cursor.execute(total_records_query, [session['user_id']]).fetchone()[0]
+
+        # Total filtered records
+        filtered_records_query = "SELECT COUNT(*) FROM inventory WHERE user_id = ?"
+        if search_value:
+            filtered_records_query += " AND (sku LIKE ? OR name LIKE ? OR category LIKE ? OR stock LIKE ? OR price LIKE ? OR status LIKE ?)"
+            params.extend(['%' + search_value + '%'] * 6)
+        total_filtered = cursor.execute(filtered_records_query, params).fetchone()[0]
+
+        # Apply ordering and pagination
+        query += f" ORDER BY {order_column_name} {order_dir} LIMIT ? OFFSET ?"
+        params.extend([length, start])
+
+        # Execute the query
+        results = cursor.execute(query, params).fetchall()
+
+        # Format data for DataTables
+        data = [
+            {
+                'id': row[0],
+                'sku': row[1],
+                'name': row[2],
+                'category': row[3],
+                'stock': row[4],
+                'price': float(row[5]),  # Ensure price is a number
+                'status': row[6]
+            }
+            for row in results
         ]
-        for item in inventory_items:
-            c.execute('''
-                INSERT INTO inventory (id, user_id, sku, name, category, stock, price, status)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ''', item)
 
-        # Seed sales data for the last 60 days
-        today = datetime.now()
-        for i in range(60):
-            date = today - timedelta(days=i)
-            transaction_amount = 500 + (i * 10)  # Example: increasing trend
-            items_sold = 50 + (i * 2)
-            c.execute('''
-                INSERT INTO sales (id, user_id, transaction_amount, items_sold, created_at)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (str(uuid.uuid4()), user_id, transaction_amount, items_sold, date))
+        response = {
+            'draw': draw,
+            'recordsTotal': total_records,
+            'recordsFiltered': total_filtered,
+            'data': data
+        }
 
-    conn.commit()
-    conn.close()
+        conn.close()
+        return jsonify(response)
 
-seed_data()
+    except Exception as e:
+        print(f"Error in get_datatables_inventory: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/', endpoint='index')
 def index():
@@ -166,7 +245,7 @@ def inventory():
         inventory_value = sum(item['stock'] * item['price'] for item in inventory_items)
         low_stock = sum(1 for item in inventory_items if 0 < item['stock'] <= 15)
         out_of_stock = sum(1 for item in inventory_items if item['stock'] == 0)
-        on_backorder = 1  # Mock value; replace with actual logic if needed
+        on_backorder = 0  # Mock value; replace with actual logic if needed
 
     except sqlite3.OperationalError as e:
         flash(f'Database error: {str(e)}. Please ensure the database is initialized correctly.', 'error')
@@ -254,78 +333,61 @@ def add_inventory_item():
 
 @app.route('/update-inventory-item', methods=['POST'])
 def update_inventory_item():
-    if 'user_id' not in session:
-        flash('Please log in to update inventory items.', 'error')
-        return redirect(url_for('login'))
+    if not session.get('user_id'):
+        return jsonify({'error': 'Unauthorized'}), 401
 
+    # Get form data from the AJAX request
     item_id = request.form.get('item_id')
-    if not item_id:
-        flash('Invalid item ID.', 'error')
-        return redirect(url_for('inventory'))
+    name = request.form.get('name')
+    category = request.form.get('category')
+    stock = request.form.get('stock')
+    price = request.form.get('price')
+    status = request.form.get('status')
 
-    # Fetch the current item data to use as defaults for unchanged fields
-    conn = sqlite3.connect('database.db')
-    c = conn.cursor()
+    # Validate required fields
+    if not all([item_id, name, category, stock, price, status]):
+        return jsonify({'error': 'All fields are required'}), 400
+
     try:
-        c.execute('SELECT name, category, stock, price, status FROM inventory WHERE id = ? AND user_id = ?', (item_id, session['user_id']))
-        current_item = c.fetchone()
-        if not current_item:
-            flash('Item not found or you do not have permission to update it.', 'error')
-            return redirect(url_for('inventory'))
+        # Convert string inputs to appropriate types
+        stock = int(stock)
+        price = float(price)
 
-        current_name, current_category, current_stock, current_price, current_status = current_item
+        # Ensure non-negative values
+        if stock < 0 or price < 0:
+            return jsonify({'error': 'Stock and price must be non-negative'}), 400
 
-        # Get submitted values, using current values as defaults if not provided
-        name = request.form.get('name', current_name)
-        category = request.form.get('category', current_category)
-        stock = request.form.get('stock', str(current_stock))
-        price = request.form.get('price', str(current_price))
-        status = request.form.get('status', current_status)
+        # Connect to the database
+        conn = sqlite3.connect('database.db')
+        cursor = conn.cursor()
 
-        # Convert to appropriate types
-        try:
-            stock = int(stock)
-            price = float(price)
-            if stock < 0 or price < 0:
-                flash('Stock and price must be non-negative.', 'error')
-                return redirect(url_for('inventory'))
-        except ValueError as e:
-            flash('Stock must be an integer and price must be a number.', 'error')
-            return redirect(url_for('inventory'))
-
-        # Validate category and status
-        valid_categories = ['Grocery', 'Tech', 'Daily Essentials', 'Clothing', 'Home Appliances']
-        valid_statuses = ['Pending', 'In Progress', 'Completed']
-        if category not in valid_categories:
-            flash('Invalid category selected.', 'error')
-            return redirect(url_for('inventory'))
-        if status not in valid_statuses:
-            flash('Invalid status selected.', 'error')
-            return redirect(url_for('inventory'))
-
-        # Log the update parameters for debugging
-        print(f"Updating item {item_id} with: name={name}, category={category}, stock={stock}, price={price}, status={status}")
-
-        # Perform the update
-        c.execute('''
-            UPDATE inventory 
+        # Execute the UPDATE query
+        cursor.execute("""
+            UPDATE inventory
             SET name = ?, category = ?, stock = ?, price = ?, status = ?
             WHERE id = ? AND user_id = ?
-        ''', (name, category, stock, price, status, item_id, session['user_id']))
-        conn.commit()
-        print(f"Rows affected: {c.rowcount}")  # Log the number of rows affected
+        """, (name, category, stock, price, status, item_id, session['user_id']))
 
-        if c.rowcount == 0:
-            flash('Item not found or no changes were made.', 'error')
-        else:
-            flash('Item updated successfully!', 'success')
-    except sqlite3.Error as e:
-        flash(f'Error updating item: {str(e)}', 'error')
-        print(f"Database error: {str(e)}")
-    finally:
+        # Check if any row was updated
+        if cursor.rowcount == 0:
+            return jsonify({'error': 'No item found or no changes made'}), 404
+
+        # Commit the transaction
+        conn.commit()
         conn.close()
 
-    return redirect(url_for('inventory'))
+        return jsonify({'success': 'Item updated successfully'})
+
+    except ValueError as ve:
+        return jsonify({'error': 'Invalid data format: ' + str(ve)}), 400
+    except sqlite3.Error as se:
+        conn.rollback()  # Rollback on database error
+        return jsonify({'error': 'Database error: ' + str(se)}), 500
+    except Exception as e:
+        return jsonify({'error': 'An unexpected error occurred: ' + str(e)}), 500
+    finally:
+        if 'conn' in locals():
+            conn.close()
 
 @app.route('/delete-inventory-item', methods=['POST'])
 def delete_inventory_item():
