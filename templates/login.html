@@ -4,29 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Log In - SME Analytics</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="/static/css/styles.css">
     <link rel="icon" href="static/images/logo.png" type="image/x-icon">
 </head>
 <body>
   <header class="header">
     <nav class="navbar">
         <div class="nav-container">
-            <a href="{{ url_for('index') }}" class="logo">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="SME Analytics Logo" class="img-logo">
+            <a href="/" class="logo">
+                <img src="/static/images/logo.png" alt="SME Analytics Logo" class="img-logo">
                 <span class="nav-link-logo active">SME Analytics</span>
             </a>
             <ul class="nav-links">
-                <li><a href="{{ url_for('index') }}" class="nav-link active">Home</a></li>
-                <li><a href="{{ url_for('features_overview') }}" class="nav-link">Feature Overview</a></li> 
-                <li><a href="{{ url_for('contact_us') }}" class="nav-link">Contact Us</a></li>
+                <li><a href="/" class="nav-link active">Home</a></li>
+                <li><a href="/features_overview" class="nav-link">Feature Overview</a></li> 
+                <li><a href="/contact_us" class="nav-link">Contact Us</a></li>
             </ul>
             <div class="nav-buttons">
-                {% if session.get('user_id') %}
-                <a href="{{ url_for('dashboard') }}" class="nav-link">Dashboard</a>
-                <a href="{{ url_for('logout') }}" class="nav-link">Logout</a>
+                {% if user_id %}
+                <a href="/dashboard" class="nav-link">Dashboard</a>
+                <a href="/logout" class="nav-link">Logout</a>
             {% else %}
-                <a href="{{ url_for('login') }}" class="btn btn-secondary">Log In</a>
-                <a href="{{ url_for('signup') }}" class="btn btn-secondary">Sign Up</a>
+                <a href="/login" class="btn btn-secondary">Log In</a>
+                <a href="/signup" class="btn btn-secondary">Sign Up</a>
             {% endif %}
             </div>
         </div>
@@ -48,16 +48,16 @@
             <p class="login-subtitle">Access your SME Analytics account.</p>
 
             <!-- Flash Messages -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }}">{{ message }}</div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-
+	    {% if messages %}
+	    {% for category, message in messages %}
+	    <div class="alert {{ 'alert-success' if category == 'success' else 'alert-error' }}">
+		    {{ message }}
+	    </div>
+	    {% endfor %}
+	    {% endif %}
+            
             <!-- Login Form -->
-            <form class="login-form" method="POST" action="{{ url_for('login') }}" id="login-form">
+            <form class="login-form" method="POST" action="/login" id="login-form">
                 <div class="form-group">
                     <label for="email">Email</label>
                     <input type="email" id="email" name="email" required>
@@ -68,7 +68,7 @@
                 </div>
                 <button type="submit" class="btn-cta">Log In</button>
             </form>
-            <p class="login-footer-text">Don't have an account? <a href="{{ url_for('signup') }}" class="terms-link">Sign Up</a></p>
+            <p class="login-footer-text">Don't have an account? <a href="/signup" class="terms-link">Sign Up</a></p>
         </div>
     </div>
 </section>
@@ -76,12 +76,12 @@
     <footer class="footer">
         <div class="container">
             <div class="footer-content">
-                <a href="{{ url_for('index') }}" class="footer-logo">
+                <a href="/" class="footer-logo">
                     <span class="logo-text">SME Analytics</span>
                 </a>
                 <div class="newsletter">
                     <h4 class="newsletter-title">Stay updated with the latest insights</h4>
-                    <form class="newsletter-form" id="newsletter-form" method="POST" action="{{ url_for('newsletter') }}">
+                    <form class="newsletter-form" id="newsletter-form" method="POST" action="/newsletter">
                         <input type="email" id="email-input" name="email" class="newsletter-input" placeholder="Enter your email">
                         <button type="submit" class="btn btn-primary">Subscribe</button>
                     </form>
@@ -101,7 +101,7 @@
         </div>
     </footer>
 
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+  <link rel="stylesheet" href="static/css/styles.css">
+    <script src="/static/js/script.js"></script>
 </body>
 </html>

@@ -1,13 +1,81 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from fastapi import FastAPI, APIRouter, Request, Form, Depends, HTTPException, status
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.middleware.wsgi import WSGIMiddleware
+from fastapi.middleware.cors import CORSMiddleware
+
 import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
 import uuid
 import re
 from datetime import datetime, timedelta
-from flask import jsonify, request
+from typing import Optional, Dict, Any
+from jose import JWTError, jwt
+from pydantic import BaseModel, EmailStr
+import os
+import pandas as pd
+import numpy as np
+import plotly.io as pio
+import json
 
-app = Flask(__name__)
-app.secret_key = '05cfe106218586fd598df4bbdba0b334'  
+from dash_app import get_sales_trend_figure
+from sales_prediction_model import SalesPredictionModel
+from analytics_engine import AnalyticsEngine
+from inventory_model import InventoryModel
+
+
+app = FastAPI()
+
+app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        )
+
+# Mount static files
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Templates
+templates = Jinja2Templates(directory="templates")
+
+# JWT Configuration
+SECRET_KEY = "05cfe106218586fd598df4bbdba0b334"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+security = HTTPBearer()
+
+# Pydantic Models
+class UserCreate(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+    business_name: str
+    industry: str
+    location: str
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class InventoryItem(BaseModel):
+    name: str
+    category: str
+    stock: int
+    price: float
+
+class ContactSubmission(BaseModel):
+    name: str
+    email: EmailStr
+    subject: str
+    message: str
+
+class NewsletterSubscription(BaseModel):
+    email: EmailStr
 
 def init_db():
     conn = sqlite3.connect('database.db')
@@ -81,72 +149,53 @@ def generate_sku(name, category):
     unique_id = str(uuid.uuid4())[:4].upper()
     return f"{name_part}-{category_part}-{unique_id}"
 
-# Helper function to determine status (default to Pending, but not used for auto-assignment anymore)
-def determine_status(stock):
-    return "Pending"  # Kept for compatibility, but overridden by form selection
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
 
-# Helper function to seed initial data (for demonstration purposes)
-# def seed_data():
-#     conn = sqlite3.connect('database.db')
-#     c = conn.cursor()
-    
-#     # Check if a user exists, if not, create one
-#     c.execute('SELECT COUNT(*) FROM users')
-#     if c.fetchone()[0] == 0:
-#         user_id = str(uuid.uuid4())
-#         c.execute('''
-#             INSERT INTO users (id, name, email, password, business_name, industry, location)
-#             VALUES (?, ?, ?, ?, ?, ?, ?)
-#         ''', (user_id, "John Doe", "john@example.com", generate_password_hash("password123"), "Tech Solutions", "Electronics", "Kathmandu"))
-        
-#         # Seed inventory data with new status options
-#         inventory_items = [
-#             (str(uuid.uuid4()), user_id, "LAP-P-2023", "Laptop Pro", "Tech", 50, 1200.00, "In Progress"),
-#             (str(uuid.uuid4()), user_id, "KB-MECH-BLU", "Mechanical Keyboard", "Tech", 15, 85.00, "Pending"),
-#             (str(uuid.uuid4()), user_id, "MSE-WIRE-BLK", "Wireless Mouse", "Tech", 5, 25.00, "Completed"),
-#             (str(uuid.uuid4()), user_id, "SSD-EXT-1TB", "External SSD 1TB", "Tech", 30, 99.99, "In Progress"),
-#             (str(uuid.uuid4()), user_id, "USB-USBC-THN", "USB-C Hub", "Tech", 0, 45.00, "Pending"),
-#         ]
-#         for item in inventory_items:
-#             c.execute('''
-#                 INSERT INTO inventory (id, user_id, sku, name, category, stock, price, status)
-#                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-#             ''', item)
-
-#         # Seed sales data for the last 60 days
-#         today = datetime.now()
-#         for i in range(60):
-#             date = today - timedelta(days=i)
-#             transaction_amount = 500 + (i * 10)  # Example: increasing trend
-#             items_sold = 50 + (i * 2)
-#             c.execute('''
-#                 INSERT INTO sales (id, user_id, transaction_amount, items_sold, created_at)
-#                 VALUES (?, ?, ?, ?, ?)
-#             ''', (str(uuid.uuid4()), user_id, transaction_amount, items_sold, date))
-
-#     conn.commit()
-#     conn.close()
-
-# seed_data()
-
-@app.route('/get_datatables_inventory', methods=['GET'])
-def get_datatables_inventory():
+def get_current_user(request: Request):
+    token = request.cookies.get("access_token")
+    if not token:
+        return None
     try:
-        # Check if user is authenticated
-        if not session.get('user_id'):
-            return jsonify({'error': 'Unauthorized'}), 401
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            return None
+        return user_id
+    except jwt.JWTError:
+        return None
 
-        # Database connection
+def require_login(request: Request):
+    user_id = get_current_user(request)
+    if not user_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+    return user_id
+
+@app.get("/get_datatables_inventory")
+async def get_datatables_inventory(
+    request: Request,
+    draw: int = 1,
+    start: int = 0,
+    length: int = 10,
+    search_value: str = ""
+):
+    user_id = require_login(request)
+    
+    try:
         conn = sqlite3.connect('database.db')
         cursor = conn.cursor()
 
         # Get DataTables parameters
-        draw = int(request.args.get('draw', 1))
-        start = int(request.args.get('start', 0))
-        length = int(request.args.get('length', 10))
-        search_value = request.args.get('search[value]', '')
-        order_column = request.args.get('order[0][column]', '0')
-        order_dir = request.args.get('order[0][dir]', 'asc')
+        order_column = request.query_params.get('order[0][column]', '0')
+        order_dir = request.query_params.get('order[0][dir]', 'asc')
+        search_value = request.query_params.get('search[value]', '')
 
         # Map column indices to database column names
         columns = ['sku', 'name', 'category', 'stock', 'price', 'status']
@@ -154,7 +203,7 @@ def get_datatables_inventory():
 
         # Build the base query
         query = "SELECT id, sku, name, category, stock, price, status FROM inventory WHERE user_id = ?"
-        params = [session['user_id']]
+        params = [user_id]
 
         # Apply search filter
         if search_value:
@@ -163,7 +212,7 @@ def get_datatables_inventory():
 
         # Total records without filtering
         total_records_query = "SELECT COUNT(*) FROM inventory WHERE user_id = ?"
-        total_records = cursor.execute(total_records_query, [session['user_id']]).fetchone()[0]
+        total_records = cursor.execute(total_records_query, [user_id]).fetchone()[0]
 
         # Total filtered records
         filtered_records_query = "SELECT COUNT(*) FROM inventory WHERE user_id = ?"
@@ -187,7 +236,7 @@ def get_datatables_inventory():
                 'name': row[2],
                 'category': row[3],
                 'stock': row[4],
-                'price': float(row[5]),  # Ensure price is a number
+                'price': float(row[5]),
                 'status': row[6]
             }
             for row in results
@@ -201,32 +250,32 @@ def get_datatables_inventory():
         }
 
         conn.close()
-        return jsonify(response)
+        return response
 
     except Exception as e:
         print(f"Error in get_datatables_inventory: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        raise HTTPException(status_code=500, detail=str(e))
 
-@app.route('/', endpoint='index')
-def index():
-    return render_template('index.html')
+@app.get("/", response_class=HTMLResponse)
+async def index(request: Request):
+    user_id = get_current_user(request)
+    return templates.TemplateResponse("index.html", {"request": request, "user_id": user_id})
 
-@app.route('/features-overview', endpoint='features_overview')
-def features_overview():
-    return render_template('features-overview.html')
+@app.get("/features_overview", response_class=HTMLResponse)
+async def features_overview(request: Request):
+    user_id = get_current_user(request)
+    return templates.TemplateResponse("features-overview.html", {"request": request, "user_id": user_id})
 
-@app.route('/inventory', endpoint='inventory')
-def inventory():
-    if 'user_id' not in session:
-        flash('Please log in to access the inventory page.', 'error')
-        return redirect(url_for('login'))
+@app.get("/inventory", response_class=HTMLResponse)
+async def inventory(request: Request):
+    user_id = require_login(request)
 
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
     
     try:
         # Fetch inventory items for the logged-in user
-        c.execute('SELECT id, sku, name, category, stock, price, status FROM inventory WHERE user_id = ?', (session['user_id'],))
+        c.execute('SELECT id, sku, name, category, stock, price, status FROM inventory WHERE user_id = ?', (user_id,))
         inventory_items = []
         for row in c.fetchall():
             inventory_items.append({
@@ -245,182 +294,123 @@ def inventory():
         inventory_value = sum(item['stock'] * item['price'] for item in inventory_items)
         low_stock = sum(1 for item in inventory_items if 0 < item['stock'] <= 15)
         out_of_stock = sum(1 for item in inventory_items if item['stock'] == 0)
-        on_backorder = 0  # Mock value; replace with actual logic if needed
+        on_backorder = 0
 
     except sqlite3.OperationalError as e:
-        flash(f'Database error: {str(e)}. Please ensure the database is initialized correctly.', 'error')
-        return redirect(url_for('dashboard'))
+        raise HTTPException(status_code=500, detail=f'Database error: {str(e)}')
     finally:
         conn.close()
 
-    return render_template('inventory.html', 
-                          inventory_items=inventory_items,
-                          total_items=total_items,
-                          total_stock=total_stock,
-                          inventory_value=inventory_value,
-                          low_stock=low_stock,
-                          out_of_stock=out_of_stock,
-                          on_backorder=on_backorder)
+    return templates.TemplateResponse("inventory.html", {
+        "request": request,
+        "user_id": user_id,
+        "inventory_items": inventory_items,
+        "total_items": total_items,
+        "total_stock": total_stock,
+        "inventory_value": inventory_value,
+        "low_stock": low_stock,
+        "out_of_stock": out_of_stock,
+        "on_backorder": on_backorder
+    })
 
-@app.route('/add-inventory-item', methods=['GET', 'POST'])
-def add_inventory_item():
-    if 'user_id' not in session:
-        flash('Please log in to add an inventory item.', 'error')
-        return redirect(url_for('login'))
+@app.post("/add-inventory-item")
+async def add_inventory_item(
+    request: Request,
+    name: str = Form(...),
+    category: str = Form(...),
+    stock: int = Form(...),
+    price: float = Form(...)
+):
+    user_id = require_login(request)
 
-    if request.method == 'POST':
-        print("Received POST request to /add-inventory-item")  # Debug print
-        name = request.form.get('name')
-        category = request.form.get('category')
-        stock = request.form.get('stock')
-        price = request.form.get('price')
+    # Validate category
+    valid_categories = ['Grocery', 'Tech', 'Daily Essentials', 'Clothing', 'Home Appliances']
+    if category not in valid_categories:
+        raise HTTPException(status_code=400, detail='Invalid category selected.')
 
-        print(f"Form data - Name: {name}, Category: {category}, Stock: {stock}, Price: {price}")  # Debug print
+    if stock < 0 or price < 0:
+        raise HTTPException(status_code=400, detail='Stock and price must be non-negative.')
 
-        # Validate inputs
-        if not all([name, category, stock, price]):
-            flash('All fields are required.', 'error')
-            print("Validation failed: Missing fields")  # Debug print
-            return redirect(url_for('inventory'))
-
-        try:
-            stock = int(stock)
-            price = float(price)
-            if stock < 0 or price < 0:
-                flash('Stock and price must be non-negative.', 'error')
-                print("Validation failed: Negative stock or price")  # Debug print
-                return redirect(url_for('inventory'))
-        except ValueError as e:
-            flash('Stock must be an integer and price must be a number.', 'error')
-            print(f"Validation failed: Invalid stock or price - {str(e)}")  # Debug print
-            return redirect(url_for('inventory'))
-
-        # Validate category
-        valid_categories = ['Grocery', 'Tech', 'Daily Essentials', 'Clothing', 'Home Appliances']
-        if category not in valid_categories:
-            flash('Invalid category selected.', 'error')
-            print(f"Validation failed: Invalid category - {category}")  # Debug print
-            return redirect(url_for('inventory'))
-
-        # Automatically generate id, sku, and status
-        item_id = str(uuid.uuid4())  # Generate unique ID
-        sku = generate_sku(name, category)  # Generate SKU based on name and category
-        status = "Pending"  # Default status for new items
-
-        print(f"Generated - ID: {item_id}, SKU: {sku}, Status: {status}")  # Debug print
-
-        # Insert into database
-        try:
-            conn = sqlite3.connect('database.db')
-            c = conn.cursor()
-            c.execute('''
-                INSERT INTO inventory (id, user_id, sku, name, category, stock, price, status)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (item_id, session['user_id'], sku, name, category, stock, price, status))
-            conn.commit()
-            print("Successfully inserted item into database")  # Debug print
-            flash('Item added successfully!', 'success')
-        except sqlite3.Error as e:
-            flash(f'Error adding item to database: {str(e)}', 'error')
-            print(f"Database error: {str(e)}")  # Debug print
-        finally:
-            conn.close()
-
-        return redirect(url_for('inventory'))
-    
-    # Handle GET request (if the route is accessed directly)
-    return redirect(url_for('inventory'))
-
-@app.route('/update-inventory-item', methods=['POST'])
-def update_inventory_item():
-    if not session.get('user_id'):
-        return jsonify({'error': 'Unauthorized'}), 401
-
-    # Get form data from the AJAX request
-    item_id = request.form.get('item_id')
-    name = request.form.get('name')
-    category = request.form.get('category')
-    stock = request.form.get('stock')
-    price = request.form.get('price')
-    status = request.form.get('status')
-
-    # Validate required fields
-    if not all([item_id, name, category, stock, price, status]):
-        return jsonify({'error': 'All fields are required'}), 400
-
-    try:
-        # Convert string inputs to appropriate types
-        stock = int(stock)
-        price = float(price)
-
-        # Ensure non-negative values
-        if stock < 0 or price < 0:
-            return jsonify({'error': 'Stock and price must be non-negative'}), 400
-
-        # Connect to the database
-        conn = sqlite3.connect('database.db')
-        cursor = conn.cursor()
-
-        # Execute the UPDATE query
-        cursor.execute("""
-            UPDATE inventory
-            SET name = ?, category = ?, stock = ?, price = ?, status = ?
-            WHERE id = ? AND user_id = ?
-        """, (name, category, stock, price, status, item_id, session['user_id']))
-
-        # Check if any row was updated
-        if cursor.rowcount == 0:
-            return jsonify({'error': 'No item found or no changes made'}), 404
-
-        # Commit the transaction
-        conn.commit()
-        conn.close()
-
-        return jsonify({'success': 'Item updated successfully'})
-
-    except ValueError as ve:
-        return jsonify({'error': 'Invalid data format: ' + str(ve)}), 400
-    except sqlite3.Error as se:
-        conn.rollback()  # Rollback on database error
-        return jsonify({'error': 'Database error: ' + str(se)}), 500
-    except Exception as e:
-        return jsonify({'error': 'An unexpected error occurred: ' + str(e)}), 500
-    finally:
-        if 'conn' in locals():
-            conn.close()
-
-@app.route('/delete-inventory-item', methods=['POST'])
-def delete_inventory_item():
-    if 'user_id' not in session:
-        flash('Please log in to delete inventory items.', 'error')
-        return redirect(url_for('login'))
-
-    item_id = request.form.get('item_id')
-    if not item_id:
-        flash('Invalid item ID.', 'error')
-        return redirect(url_for('inventory'))
+    # Generate item data
+    item_id = str(uuid.uuid4())
+    sku = generate_sku(name, category)
+    status = "Pending"
 
     try:
         conn = sqlite3.connect('database.db')
         c = conn.cursor()
-        c.execute('DELETE FROM inventory WHERE id = ? AND user_id = ?', (item_id, session['user_id']))
+        c.execute('''
+            INSERT INTO inventory (id, user_id, sku, name, category, stock, price, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (item_id, user_id, sku, name, category, stock, price, status))
         conn.commit()
-        if c.rowcount == 0:
-            flash('Item not found or you do not have permission to delete it.', 'error')
-        else:
-            flash('Item deleted successfully!', 'success')
     except sqlite3.Error as e:
-        flash(f'Error deleting item: {str(e)}', 'error')
+        raise HTTPException(status_code=500, detail=f'Error adding item: {str(e)}')
     finally:
         conn.close()
 
-    return redirect(url_for('inventory'))
+    return RedirectResponse(url="/inventory", status_code=303)
 
-@app.route('/sales', endpoint='sales')
-def sales():
-    if 'user_id' not in session:
-        flash('Please log in to access the sales page.', 'error')
-        return redirect(url_for('login'))
+@app.post("/update-inventory-item")
+async def update_inventory_item(
+    request: Request,
+    item_id: str = Form(...),
+    name: str = Form(...),
+    category: str = Form(...),
+    stock: int = Form(...),
+    price: float = Form(...),
+    status: str = Form(...)
+):
+    user_id = require_login(request)
+
+    if stock < 0 or price < 0:
+        return JSONResponse({'error': 'Stock and price must be non-negative'}, status_code=400)
+
+    try:
+        conn = sqlite3.connect('database.db')
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            UPDATE inventory
+            SET name = ?, category = ?, stock = ?, price = ?, status = ?
+            WHERE id = ? AND user_id = ?
+        """, (name, category, stock, price, status, item_id, user_id))
+
+        if cursor.rowcount == 0:
+            return JSONResponse({'error': 'No item found or no changes made'}, status_code=404)
+
+        conn.commit()
+        conn.close()
+
+        return JSONResponse({'success': 'Item updated successfully'})
+
+    except sqlite3.Error as e:
+        return JSONResponse({'error': f'Database error: {str(e)}'}, status_code=500)
+
+@app.post("/delete-inventory-item")
+async def delete_inventory_item(
+    request: Request,
+    item_id: str = Form(...)
+):
+    user_id = require_login(request)
+
+    try:
+        conn = sqlite3.connect('database.db')
+        c = conn.cursor()
+        c.execute('DELETE FROM inventory WHERE id = ? AND user_id = ?', (item_id, user_id))
+        conn.commit()
+        if c.rowcount == 0:
+            raise HTTPException(status_code=404, detail='Item not found')
+    except sqlite3.Error as e:
+        raise HTTPException(status_code=500, detail=f'Error deleting item: {str(e)}')
+    finally:
+        conn.close()
+
+    return RedirectResponse(url="/inventory", status_code=303)
+
+@app.get("/sales", response_class=HTMLResponse)
+async def sales(request: Request):
+    user_id = require_login(request)
 
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
@@ -431,7 +421,7 @@ def sales():
         SELECT transaction_amount, items_sold 
         FROM sales 
         WHERE user_id = ? AND created_at >= ?
-    ''', (session['user_id'], thirty_days_ago))
+    ''', (user_id, thirty_days_ago))
     sales_data = c.fetchall()
 
     # Calculate sales metrics for the last 30 days
@@ -446,7 +436,7 @@ def sales():
         SELECT transaction_amount, items_sold 
         FROM sales 
         WHERE user_id = ? AND created_at >= ? AND created_at < ?
-    ''', (session['user_id'], sixty_days_ago, thirty_days_ago))
+    ''', (user_id, sixty_days_ago, thirty_days_ago))
     prev_sales_data = c.fetchall()
 
     prev_total_revenue = sum(row[0] for row in prev_sales_data)
@@ -473,126 +463,121 @@ def sales():
 
     conn.close()
 
-    return render_template('sales.html', sales_metrics=sales_metrics)
+    return templates.TemplateResponse("sales.html", {
+        "request": request,
+        "user_id": user_id,
+        "sales_metrics": sales_metrics
+    })
 
-@app.route('/contact-us', methods=['GET', 'POST'])
-def contact_us():
-    if request.method == 'POST':
-        name = request.form.get('name')
-        email = request.form.get('email')
-        subject = request.form.get('subject')
-        message = request.form.get('message')
+@app.get("/contact_us", response_class=HTMLResponse)
+async def contact_us_get(request: Request):
+    user_id = get_current_user(request)
+    return templates.TemplateResponse("contact-us.html", {"request": request, "user_id": user_id})
 
-        if not all([name, email, subject, message]):
-            flash('All fields are required.', 'error')
-            return redirect(url_for('contact_us'))
-        if not validate_email(email):
-            flash('Please enter a valid email address.', 'error')
-            return redirect(url_for('contact_us'))
+@app.post("/contact_us")
+async def contact_us_post(
+    request: Request,
+    name: str = Form(...),
+    email: str = Form(...),
+    subject: str = Form(...),
+    message: str = Form(...)
+):
+    if not validate_email(email):
+        raise HTTPException(status_code=400, detail='Please enter a valid email address.')
 
-        try:
-            conn = sqlite3.connect('database.db')
-            c = conn.cursor()
-            c.execute('''
-                INSERT INTO contact_submissions (id, name, email, subject, message)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (str(uuid.uuid4()), name, email, subject, message))
-            conn.commit()
-            conn.close()
-            flash('Your message has been sent successfully!', 'success')
-            return redirect(url_for('contact_us'))
-        except sqlite3.Error as e:
-            flash('An error occurred while submitting your message. Please try again.', 'error')
-            return redirect(url_for('contact_us'))
-
-    return render_template('contact-us.html')
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-
-        if not all([email, password]):
-            flash('Email and password are required.', 'error')
-            return redirect(url_for('login'))
-        if not validate_email(email):
-            flash('Please enter a valid email address.', 'error')
-            return redirect(url_for('login'))
-
+    try:
         conn = sqlite3.connect('database.db')
         c = conn.cursor()
-        c.execute('SELECT * FROM users WHERE email = ?', (email,))
-        user = c.fetchone()
+        c.execute('''
+            INSERT INTO contact_submissions (id, name, email, subject, message)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (str(uuid.uuid4()), name, email, subject, message))
+        conn.commit()
         conn.close()
+    except sqlite3.Error:
+        raise HTTPException(status_code=500, detail='An error occurred while submitting your message.')
 
-        if user and check_password_hash(user[3], password):
-            session['user_id'] = user[0]
-            session['user_name'] = user[1]
-            print("Redirecting to dashboard")  # Debug statement
-            return redirect(url_for('dashboard'))
-        else:
-            flash('Invalid email or password.', 'error')
-            return redirect(url_for('login'))
+    return RedirectResponse(url="/contact-us", status_code=303)
 
-    return render_template('login.html')
+@app.get("/login", response_class=HTMLResponse)
+async def login_get(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
 
-@app.route('/signup', methods=['GET', 'POST'])
-def signup():
-    if request.method == 'POST':
-        name = request.form.get('name')
-        email = request.form.get('email')
-        password = request.form.get('password')
-        business_name = request.form.get('business_name')
-        industry = request.form.get('industry')
-        location = request.form.get('location')
-        terms_agreed = request.form.get('terms')
-
-        if not all([name, email, password, business_name, industry, location]):
-            flash('All fields are required.', 'error')
-            return redirect(url_for('signup'))
-        if not validate_email(email):
-            flash('Please enter a valid email address.', 'error')
-            return redirect(url_for('signup'))
-        if len(password) < 6:
-            flash('Password must be at least 6 characters long.', 'error')
-            return redirect(url_for('signup'))
-        if not terms_agreed:
-            flash('You must agree to the Terms of Service and Privacy Policy.', 'error')
-            return redirect(url_for('signup'))
-
-        hashed_password = generate_password_hash(password)
-
-        try:
-            conn = sqlite3.connect('database.db')
-            c = conn.cursor()
-            c.execute('''
-                INSERT INTO users (id, name, email, password, business_name, industry, location)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            ''', (str(uuid.uuid4()), name, email, hashed_password, business_name, industry, location))
-            conn.commit()
-            conn.close()
-            flash('Account created successfully! Please log in.', 'success')
-            return redirect(url_for('login'))
-        except sqlite3.IntegrityError:
-            flash('Email already exists. Please use a different email.', 'error')
-            return redirect(url_for('signup'))
-        except sqlite3.Error as e:
-            flash('An error occurred while creating your account. Please try again.', 'error')
-            return redirect(url_for('signup'))
-
-    return render_template('signup.html')
-
-@app.route('/newsletter', methods=['POST'])
-def newsletter():
-    email = request.form.get('email')
-
-    if not email:
-        flash('Email is required.', 'error')
-        return redirect(url_for('index'))
+@app.post("/login")
+async def login_post(
+    request: Request,
+    email: str = Form(...),
+    password: str = Form(...)
+):
     if not validate_email(email):
-        flash('Please enter a valid email address.', 'error')
-        return redirect(url_for('index'))
+        raise HTTPException(status_code=400, detail='Please enter a valid email address.')
+
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute('SELECT * FROM users WHERE email = ?', (email,))
+    user = c.fetchone()
+    conn.close()
+
+    if user and check_password_hash(user[3], password):
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": user[0]}, expires_delta=access_token_expires
+        )
+        response = RedirectResponse(url="/dashboard", status_code=303)
+        response.set_cookie(key="access_token", value=access_token, httponly=True)
+        return response
+    else:
+        raise HTTPException(status_code=401, detail='Invalid email or password.')
+
+@app.get("/signup", response_class=HTMLResponse)
+async def signup_get(request: Request):
+    return templates.TemplateResponse("signup.html", {"request": request})
+
+@app.post("/signup")
+async def signup_post(
+    request: Request,
+    name: str = Form(...),
+    email: str = Form(...),
+    password: str = Form(...),
+    business_name: str = Form(...),
+    industry: str = Form(...),
+    location: str = Form(...),
+    terms: Optional[str] = Form(None)
+):
+    if not validate_email(email):
+        raise HTTPException(status_code=400, detail='Please enter a valid email address.')
+    
+    if len(password) < 6:
+        raise HTTPException(status_code=400, detail='Password must be at least 6 characters long.')
+    
+    if not terms:
+        raise HTTPException(status_code=400, detail='You must agree to the Terms of Service and Privacy Policy.')
+
+    hashed_password = generate_password_hash(password)
+
+    try:
+        conn = sqlite3.connect('database.db')
+        c = conn.cursor()
+        c.execute('''
+            INSERT INTO users (id, name, email, password, business_name, industry, location)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (str(uuid.uuid4()), name, email, hashed_password, business_name, industry, location))
+        conn.commit()
+        conn.close()
+    except sqlite3.IntegrityError:
+        raise HTTPException(status_code=400, detail='Email already exists. Please use a different email.')
+    except sqlite3.Error:
+        raise HTTPException(status_code=500, detail='An error occurred while creating your account.')
+
+    return RedirectResponse(url="/login", status_code=303)
+
+@app.post("/newsletter")
+async def newsletter(
+    request: Request,
+    email: str = Form(...)
+):
+    if not validate_email(email):
+        raise HTTPException(status_code=400, detail='Please enter a valid email address.')
 
     try:
         conn = sqlite3.connect('database.db')
@@ -603,59 +588,448 @@ def newsletter():
         ''', (str(uuid.uuid4()), email))
         conn.commit()
         conn.close()
-        flash('Subscribed successfully! Thank you for joining SME Analytics.', 'success')
-        return redirect(url_for('index'))
     except sqlite3.IntegrityError:
-        flash('This email is already subscribed.', 'error')
-        return redirect(url_for('index'))
-    except sqlite3.Error as e:
-        flash('An error occurred while subscribing. Please try again.', 'error')
-        return redirect(url_for('index'))
+        raise HTTPException(status_code=400, detail='This email is already subscribed.')
+    except sqlite3.Error:
+        raise HTTPException(status_code=500, detail='An error occurred while subscribing.')
 
-@app.route('/logout')
-def logout():
-    # Clear session data
-    session.pop('user_id', None)
-    session.pop('user_name', None)
-    return redirect(url_for('index'))  
+    return RedirectResponse(url="/", status_code=303)
 
-@app.route('/dashboard')
-def dashboard():
-    if 'user_id' not in session:
-        flash('Please log in to access the dashboard.', 'error')
-        print("No user_id in session, redirecting to login")  
-        return redirect(url_for('login'))
+@app.get("/logout")
+async def logout():
+    response = RedirectResponse(url="/", status_code=303)
+    response.delete_cookie(key="access_token")
+    return response
+
+@app.get("/normaldashboard", response_class=HTMLResponse)
+async def normaldashboard(request: Request):
+    user_id = require_login(request)
     
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
     
     try:
         # Fetch user data
-        c.execute('SELECT id, name, email, business_name, industry, location FROM users WHERE id = ?', (session['user_id'],))
+        c.execute('SELECT id, name, email, business_name, industry, location FROM users WHERE id = ?', (user_id,))
         user = c.fetchone()
         if not user:
-            flash('User not found.', 'error')
-            return redirect(url_for('login'))
+            raise HTTPException(status_code=404, detail='User not found.')
 
         # Fetch inventory items for the logged-in user
-        c.execute('SELECT id, name, category, stock, price FROM inventory WHERE user_id = ?', (session['user_id'],))
-        inventory_items = []
-        for row in c.fetchall():
-            inventory_items.append({
-                'id': row[0],
-                'name': row[1],
-                'category': row[2],
-                'stock': row[3],
-                'price': row[4]
-            })
+        c.execute('SELECT id, name, category, stock, price FROM inventory WHERE user_id = ?', (user_id,))
+        inventory_items = [dict(id=row[0], name=row[1], category=row[2], stock=row[3], price=row[4]) for row in c.fetchall()]
             
+        # Load sales data from sales_table
+        sales_df = pd.read_sql_query('SELECT * FROM sales_table', conn)
+
     except sqlite3.Error as e:
-        flash(f'Database error: {str(e)}', 'error')
-        return redirect(url_for('login'))
+        raise HTTPException(status_code=500, detail=f'Database error: {str(e)}')
     finally:
         conn.close()
 
-    return render_template('dashboard.html', user=user, inventory_items=inventory_items)
+    # Generate charts
+    sales_trend_fig = get_sales_trend_figure(sales_df)
+
+    # Convert to embeddable HTML
+    sales_trend_html = pio.to_html(sales_trend_fig, include_plotlyjs=False, full_html=False)
+
+    return templates.TemplateResponse("dashboard.html", {
+        "request": request,
+        "user_id": user_id,
+        "user": user,
+        "inventory_items": inventory_items,
+        "sales_trend_chart": sales_trend_html,
+    })
+
+sales_predictor = SalesPredictionModel('database.db')
+analytics_engine = AnalyticsEngine('database.db')
+inventory_model = InventoryModel('database.db')
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard(request: Request):
+    return templates.TemplateResponse("enhanced_dashboard.html",
+            {"request": request})
+
+@app.get("/api/dashboard/metrics")
+async def get_dashboard_metrics():
+    """Get key dashboard metrics"""
+    try:
+        # Get sales metrics
+        sales_metrics = analytics_engine.get_dashboard_metrics()
+        
+        # Get inventory metrics
+        inventory_df, _ = inventory_model.load_data()
+        if inventory_df is not None:
+            inventory_summary = inventory_model.get_dashboard_summary(inventory_df)
+            
+            # Combine metrics
+            metrics = {
+                **sales_metrics,
+                'inventoryValue': inventory_summary['total_value'],
+                'inventoryChange': -2.1,  # Simulated change
+                'stockHealth': inventory_summary['stock_health_percentage'],
+                'criticalItems': inventory_summary['critical_items']
+            }
+        else:
+            metrics = sales_metrics
+        
+        return JSONResponse(content=metrics)
+    except Exception as e:
+        print(f"Error getting dashboard metrics: {e}")
+        return JSONResponse(content={
+            'totalRevenue': 298612065.81,
+            'revenueChange': 15.2,
+            'customersAcquired': 8855,
+            'customersChange': 12.5,
+            'inventoryValue': 2847500,
+            'inventoryChange': -2.1,
+            'growthRate': 18.7,
+            'growthChange': 5.3,
+            'stockHealth': 90.1,
+            'criticalItems': 217
+        })
+
+@app.get("/api/dashboard/charts")
+async def get_dashboard_charts():
+    """Get chart data for dashboard"""
+    try:
+        charts_data = analytics_engine.get_charts_data()
+        
+        # Add inventory charts data
+        inventory_df, _ = inventory_model.load_data()
+        if inventory_df is not None:
+            inventory_charts = inventory_model.get_inventory_charts_data(inventory_df)
+            charts_data.update(inventory_charts)
+        
+        return JSONResponse(content=charts_data)
+    except Exception as e:
+        print(f"Error getting charts data: {e}")
+        return JSONResponse(content={})
+
+@app.get("/api/dashboard/predictions")
+async def get_sales_predictions():
+    """Get sales predictions"""
+    try:
+
+        if sales_predictor.model is None:
+            df = sales_predictor.load_sales_data()
+            sales_predictor.train_model(df)
+
+        # Get future predictions
+        future_predictions = sales_predictor.predict_future_sales()
+        
+        # Get recent historical data (last 30 days)
+        historical_data = sales_predictor.df.tail(30).copy()
+        
+        # Combine historical and future data
+        all_dates = []
+        all_predictions = []
+        all_confidence_upper = []
+        all_confidence_lower = []
+        
+        # Add historical data
+        for _, row in historical_data.iterrows():
+            all_dates.append(row['ds'].strftime('%Y-%m-%d'))
+            all_predictions.append(float(row['y']))
+            all_confidence_upper.append(float(row['y']))  # No confidence interval for historical
+            all_confidence_lower.append(float(row['y']))
+        
+        # Add future predictions
+        for _, row in future_predictions.iterrows():
+            all_dates.append(row['Date'].strftime('%Y-%m-%d'))
+            all_predictions.append(float(row['PredictedSales']))
+            all_confidence_upper.append(float(row['ConfidenceUpper']))
+            all_confidence_lower.append(float(row['ConfidenceLower']))
+        
+        response_data = {
+            'dates': all_dates,
+            'predictions': all_predictions,
+            'confidenceUpper': all_confidence_upper,
+            'confidenceLower': all_confidence_lower,
+            'historical_length': len(historical_data)  # So JS knows where historical ends
+        }
+        
+        return JSONResponse(content=response_data)
+        
+    except Exception as e:
+        print(f"Error getting predictions: {e}")
+        return JSONResponse(content={
+            'dates': [],
+            'predictions': [],
+            'confidenceUpper': [],
+            'confidenceLower': []
+        })
+
+@app.get("/api/dashboard/recommendations")
+async def get_recommendations():
+    """Get business recommendations"""
+    try:
+        recommendations = analytics_engine.get_business_recommendations()
+        
+        # Add inventory recommendations
+        inventory_df, _ = inventory_model.load_data()
+        if inventory_df is not None:
+            reorder_recs = inventory_model.get_reorder_recommendations(inventory_df, top_n=3)
+            
+            # Convert inventory recommendations to standard format
+            for rec in reorder_recs[:3]:  # Top 3 only
+                recommendations.append({
+                    'category': 'Inventory Management',
+                    'title': f'Reorder {rec["ProductName"]}',
+                    'description': f'Stock level critical at {rec["StoreLocation"]}. Current: {rec["CurrentStock"]} units. Recommended order: {rec["RecommendedQuantity"]} units.',
+                    'priority': 'High' if rec['UrgencyScore'] > 80 else 'Medium',
+                    'impact': 'Operational Efficiency'
+                })
+        
+        return JSONResponse(content=recommendations)
+    except Exception as e:
+        print(f"Error getting recommendations: {e}")
+        return JSONResponse(content=[])
+
+@app.get("/api/inventory/summary")
+async def get_inventory_summary():
+    """Get inventory summary metrics"""
+    try:
+        inventory_df, _ = inventory_model.load_data()
+        if inventory_df is None:
+            raise HTTPException(status_code=500, detail="Failed to load inventory data")
+        
+        summary = inventory_model.get_dashboard_summary(inventory_df)
+        return JSONResponse(content=summary)
+    except Exception as e:
+        print(f"Error getting inventory summary: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+def convert_numpy(obj):
+    if isinstance(obj, (np.integer, np.int64)):
+        return int(obj)
+    elif isinstance(obj, (np.floating, np.float64)):
+        return float(obj)
+    elif isinstance(obj, (pd.Timestamp, datetime)):
+        return obj.isoformat()
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    return obj
+
+@app.get("/api/inventory/analysis")
+async def get_inventory_analysis():
+    """Get detailed inventory analysis"""
+    try:
+        inventory_df, _ = inventory_model.load_data()
+        if inventory_df is None:
+            raise HTTPException(status_code=500, detail="Failed to load inventory data")
+        
+        analysis = inventory_model.analyze_inventory_status(inventory_df)
+        
+        # Recursively convert all NumPy and pandas types
+        clean_analysis = json.loads(json.dumps(analysis, default=convert_numpy))
+
+        return JSONResponse(content=clean_analysis)
+
+    except Exception as e:
+        print(f"Error getting inventory analysis: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/inventory/reorder-recommendations")
+async def get_reorder_recommendations():
+    """Get reorder recommendations"""
+    try:
+        inventory_df, _ = inventory_model.load_data()
+        if inventory_df is None:
+            raise HTTPException(status_code=500, detail="Failed to load inventory data")
+        
+        recommendations = inventory_model.get_reorder_recommendations(inventory_df, top_n=20)
+        return JSONResponse(content=recommendations)
+    except Exception as e:
+        print(f"Error getting reorder recommendations: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/inventory/predictions")
+async def get_inventory_predictions():
+    """Get inventory stock predictions"""
+    try:
+        inventory_df, _ = inventory_model.load_data()
+        if inventory_df is None:
+            raise HTTPException(status_code=500, detail="Failed to load inventory data")
+        
+        predictions = inventory_model.predict_stock_levels(inventory_df, days_ahead=30)
+        return JSONResponse(content=predictions)
+    except Exception as e:
+        print(f"Error getting inventory predictions: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/inventory/insights")
+async def get_inventory_insights():
+    """Get inventory insights and alerts"""
+    try:
+        inventory_df, _ = inventory_model.load_data()
+        if inventory_df is None:
+            raise HTTPException(status_code=500, detail="Failed to load inventory data")
+        
+        insights = inventory_model.generate_inventory_insights(inventory_df)
+        return JSONResponse(content=insights)
+    except Exception as e:
+        print(f"Error getting inventory insights: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/inventory/charts")
+async def get_inventory_charts():
+    """Get inventory chart data"""
+    try:
+        inventory_df, _ = inventory_model.load_data()
+        if inventory_df is None:
+            raise HTTPException(status_code=500, detail="Failed to load inventory data")
+        
+        charts_data = inventory_model.get_inventory_charts_data(inventory_df)
+        return JSONResponse(content=charts_data)
+    except Exception as e:
+        print(f"Error getting inventory charts: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+@app.get("/api/dashboard/insights")
+async def get_key_insights():
+    """Get key business insights"""
+    try:
+        if analytics_engine:
+            insights = analytics_engine.get_key_insights()
+            return insights
+        else:
+            raise Exception("Analytics engine not available")
+        
+    except Exception as e:
+        print(f"Error getting insights: {e}")
+        # Return fallback data
+        return [
+            {
+                "title": "Festival Sales Boost",
+                "description": "Festival days generate 122% higher sales than regular days.",
+                "icon": "celebration"
+            },
+            {
+                "title": "Leading Category",
+                "description": "Electronics dominates with 40% of total revenue.",
+                "icon": "trending_up"
+            },
+            {
+                "title": "Digital Payment Growth",
+                "description": "Mobile wallet and card payments account for 70% of transactions.",
+                "icon": "payment"
+            }
+        ]
+
+@app.get("/api/dashboard/alerts")
+async def get_alerts_notifications():
+    """Get business alerts and notifications"""
+    try:
+        if analytics_engine:
+            alerts = analytics_engine.get_alerts_notifications()
+            return alerts
+        else:
+            raise Exception("Analytics engine not available")
+        
+    except Exception as e:
+        print(f"Error getting alerts: {e}")
+        # Return fallback data
+        return [
+            {
+                "type": "warning",
+                "title": "Inventory Alert",
+                "description": "Low stock detected for 4 high-demand products.",
+                "priority": "High"
+            },
+            {
+                "type": "info",
+                "title": "Festival Opportunity",
+                "description": "Dashain festival approaching. Prepare inventory and marketing campaigns.",
+                "priority": "Medium"
+            },
+            {
+                "type": "success",
+                "title": "Sales Growth",
+                "description": "Mobile wallet payments increased by 25% this month.",
+                "priority": "Low"
+            }
+        ]
+
+@app.get("/api/dashboard/model-performance")
+async def get_model_performance():
+    """Get prediction model performance metrics"""
+    try:
+        if prediction_model and prediction_model.model is not None:
+            performance = prediction_model.get_model_performance()
+            trends = prediction_model.get_trend_analysis()
+            
+            return {
+                "performance": performance,
+                "trends": trends
+            }
+        else:
+            return {
+                "performance": {
+                    "MAE": 188981.62,
+                    "MAPE": 112.87,
+                    "RMSE": 253524.33,
+                    "R2": 0.149
+                },
+                "trends": {
+                    "average_monthly_growth": 1.65,
+                    "festival_impact_percent": 122.49,
+                    "weekend_impact_percent": 24.76,
+                    "total_sales_period": 298612065.81,
+                    "average_daily_sales": 408498.04
+                }
+            }
+        
+    except Exception as e:
+        print(f"Error getting model performance: {e}")
+        return {"error": str(e)}
+
+@app.get("/api/dashboard/category-predictions")
+async def get_category_predictions():
+    """Get category-wise predictions"""
+    try:
+        if prediction_model:
+            category_preds = prediction_model.get_category_predictions(days_ahead=30)
+            return category_preds if category_preds else []
+        else:
+            return [
+                {"category": "Electronics", "predicted_daily_sales": 166107.08, "percentage_share": 66.8},
+                {"category": "Groceries", "predicted_daily_sales": 64957.01, "percentage_share": 26.1},
+                {"category": "Clothing", "predicted_daily_sales": 16077.91, "percentage_share": 6.5},
+                {"category": "Jewelry", "predicted_daily_sales": 1658.25, "percentage_share": 0.7}
+            ]
+        
+    except Exception as e:
+        print(f"Error getting category predictions: {e}")
+        return []
+
+# API endpoint to provide user data to Dash app
+@app.get("/api/user-data/{user_id}")
+async def get_user_data(user_id: int):
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    
+    try:
+        c.execute('SELECT id, name, email, business_name, industry, location FROM users WHERE id = ?', (user_id,))
+        user = c.fetchone()
+        if user:
+            return {
+                "id": user[0],
+                "name": user[1],
+                "email": user[2],
+                "business_name": user[3],
+                "industry": user[4],
+                "location": user[5]
+            }
+        return None
+    finally:
+        conn.close()
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

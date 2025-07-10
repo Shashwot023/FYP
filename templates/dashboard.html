@@ -7,27 +7,29 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
 </head>
 <body>
        <header class="header">
     <nav class="navbar">
         <div class="nav-container">
-            <a href="{{ url_for('index') }}" class="logo">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="SME Analytics Logo" class="img-logo">
+            <a href="/" class="logo">
+                <img src="/static/images/logo.png" alt="SME Analytics Logo" class="img-logo">
                 <span class="nav-link-logo active">SME Analytics</span>
             </a>
             <ul class="nav-links">
-                <li><a href="{{ url_for('index') }}" class="nav-link ">Home</a></li>
-                <li><a href="{{ url_for('features_overview') }}" class="nav-link">Feature Overview</a></li> 
-                <li><a href="{{ url_for('contact_us') }}" class="nav-link">Contact Us</a></li>
+                <li><a href="/" class="nav-link ">Home</a></li>
+                <li><a href="/features_overview" class="nav-link">Feature Overview</a></li> 
+                <li><a href="/contact_us" class="nav-link">Contact Us</a></li>
             </ul>
             <div class="nav-buttons">
-                {% if session.get('user_id') %}
-                <a href="{{ url_for('dashboard') }}" class="nav-link active">Dashboard</a>
-                <a href="{{ url_for('logout') }}" class="nav-link">Logout</a>
+            {% if user_id %}
+                <a href="/dashboard" class="nav-link active">Dashboard</a>
+                <a href="/logout" class="nav-link">Logout</a>
             {% else %}
-                <a href="{{ url_for('login') }}" class="btn btn-secondary">Log In</a>
-                <a href="{{ url_for('signup') }}" class="btn btn-secondary">Sign Up</a>
+                <a href="/login" class="btn btn-secondary">Log In</a>
+                <a href="/signup" class="btn btn-secondary">Sign Up</a>
             {% endif %}
             </div>
         </div>
@@ -72,7 +74,10 @@
                     <div class="chart-card">
                         <a href="{{ url_for('sales') }}" class="nav-link"> <h3>Sales Trend</h3></a>
                         <p>Monthly sales performance across different sectors in Nepal.</p>
-                        <div class="chart-placeholder">[Line Chart: Sales Trends by Sector]</div>
+                        <div class="chart-container">
+    			{{ sales_trend_chart | safe }}
+			</div>
+
                     </div>
                     <div class="chart-card">
                         <a href="{{ url_for('inventory') }}" class="nav-link"> <h3>Current Inventory Items</h3></a>
@@ -157,7 +162,7 @@
         </div>
     </footer>
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <script src="static/js/script.js"></script>
 </body>
 </html>

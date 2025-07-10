@@ -1461,6 +1461,17 @@ html {
     font-size: 0.9rem;
     color: #666;
 }
+.chart-container {
+	width: 100%;
+	max-width: 100%;
+	overflow-x: auto;
+	padding: 1rem 0;
+	box-sizing: border-box;
+}
+
+.chart-container > div {
+	max_width: 100%  !important;
+}
 
 .alert {
     padding: 1rem;
@@ -1748,6 +1759,7 @@ th {
 .analytics-grid, .metrics-grid, .charts-grid { 
     display: grid; 
     gap: 20px; 
+    overflow-x: auto;
 }
 
 .analytics-grid { 
@@ -2128,3 +2140,4 @@ table.display td {
     color: white;
     border: none;
 }
+

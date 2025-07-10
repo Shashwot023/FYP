@@ -12,22 +12,22 @@
     <header class="header">
     <nav class="navbar">
         <div class="nav-container">
-            <a href="{{ url_for('index') }}" class="logo">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="SME Analytics Logo" class="img-logo">
+            <a href="/" class="logo">
+                <img src="/static/images/logo.png" alt="SME Analytics Logo" class="img-logo">
                 <span class="nav-link-logo active">SME Analytics</span>
             </a>
             <ul class="nav-links">
-                <li><a href="{{ url_for('index') }}" class="nav-link ">Home</a></li>
-                <li><a href="{{ url_for('features_overview') }}" class="nav-link">Feature Overview</a></li> 
-                <li><a href="{{ url_for('contact_us') }}" class="nav-link">Contact Us</a></li>
+                <li><a href="/" class="nav-link ">Home</a></li>
+                <li><a href="/features_overview" class="nav-link">Feature Overview</a></li> 
+                <li><a href="/contact_us" class="nav-link">Contact Us</a></li>
             </ul>
             <div class="nav-buttons">
-                {% if session.get('user_id') %}
-                <a href="{{ url_for('dashboard') }}" class="nav-link active">Dashboard</a>
-                <a href="{{ url_for('logout') }}" class="nav-link">Logout</a>
+                {% if user_id %}
+                <a href="/dashboard" class="nav-link active">Dashboard</a>
+                <a href="logout" class="nav-link">Logout</a>
             {% else %}
-                <a href="{{ url_for('login') }}" class="btn btn-secondary">Log In</a>
-                <a href="{{ url_for('signup') }}" class="btn btn-secondary">Sign Up</a>
+                <a href="login" class="btn btn-secondary">Log In</a>
+                <a href="signup" class="btn btn-secondary">Sign Up</a>
             {% endif %}
             </div>
         </div>
@@ -38,15 +38,16 @@
         <div class="container">
             <h1>Inventory Overview</h1>
             <!-- Add flash message display -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    <div class="flash-messages">
-                        {% for category, message in messages %}
+	    {% if messages %}
+	    <div class="flash-messages">
+		    {% for category, message in messages %}
+		    <div class="alert {{ 'alert-success' if category == 'success'else 'alert-error' }}">
                             <div class="flash {{ category }}">{{ message }}</div>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            {% endwith %}
+		    </div>
+		    {% endfor %}
+	    </div>
+	    {% endif %}
+
             <div class="metrics-grid">
                 <div class="metrics-card">
                     <h3>Total Inventory Items</h3>
@@ -132,12 +133,12 @@
      <footer class="footer">
         <div class="container">
             <div class="footer-content">
-                <a href="{{ url_for('index') }}" class="footer-logo">
+                <a href="/" class="footer-logo">
                     <span class="logo-text">SME Analytics</span>
                 </a>
                 <div class="newsletter">
                     <h4 class="newsletter-title">Stay updated with the latest insights</h4>
-                    <form class="newsletter-form" id="newsletter-form" method="POST" action="{{ url_for('newsletter') }}">
+                    <form class="newsletter-form" id="newsletter-form" method="POST" action="/newsletter">
                         <input type="email" id="email-input" name="email" class="newsletter-input" placeholder="Enter your email">
                         <button type="submit" class="btn btn-primary">Subscribe</button>
                     </form>
@@ -212,7 +213,7 @@
         });
     </script>
 
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+  <link rel="stylesheet" href="/static/css/styles.css">
+    <script src="/static/js/script.js"></script>
 </body>
 </html>
