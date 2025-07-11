@@ -218,6 +218,7 @@ class DashboardManager {
     }
 
     renderCharts() {
+	console.log("Rendering all charts...")
         this.renderSalesForecastChart();
         this.renderProductPerformanceChart();
         this.renderCustomerSegmentationChart();
@@ -303,68 +304,86 @@ class DashboardManager {
     }
 
     renderProductPerformanceChart() {
-        const container = document.getElementById('product-performance-chart');
-        if (!container) return;
+	console.log("Rendering Product Performance Matrix...")
+    	const container = document.getElementById('product-performance-chart');
+	    if (!container) return;
 
-        const data = this.data.charts?.productPerformance || this.getMockData('/api/dashboard/charts').productPerformance;
+	    const data = this.data.charts?.productPerformance || this.getMockData('/api/dashboard/charts').productPerformance;
 
-        // Validate data
-        if (!data || !data.products || !data.salesVolume || !data.profitMargin) {
-            container.innerHTML = '<div style="text-align: center; padding: 50px; color: #666;">No product performance data available</div>';
-            return;
-        }
+	    console.log("Product Performance Data:", data);
+	    // Validate data
+	    if (!data || !data.x || !data.y || !data.text || !data.size) {
+        	container.innerHTML = '<div style="text-align: center; padding: 50px; color: #666;">No product performance data available</div>';
+	        return;
+	    }
 
-        const trace = {
-            x: data.salesVolume,
-            y: data.profitMargin,
-            mode: 'markers+text',
-            type: 'scatter',
-            text: data.products,
-            textposition: 'top center',
-            marker: {
-                size: data.salesVolume.map(v => Math.max(10, v / 1000)),
-                color: data.profitMargin,
-                colorscale: 'Viridis',
-                showscale: true,
-                colorbar: {
-                    title: 'Profit Margin (%)',
-                    titleside: 'right'
-                }
-            },
-            hovertemplate: '<b>%{text}</b><br>Sales Volume: %{x}<br>Profit Margin: %{y}%<extra></extra>'
-        };
+	    const trace = {
+        	x: data.x,
+	        y: data.y,
+        	text: data.text,
+	        mode: 'markers+text',
+        	type: 'scatter',
+	        textposition: 'top center',
+        	marker: {
+	            size: data.size.map(s => Math.max(10, s / 10000)),  // Scale to avoid huge bubbles
+        	    color: data.color.map(category => {
+                	// Simple category-based color mapping
+	                const categoryColors = {
+        	            "Electronics": '#1976D2',
+                	    "Groceries": '#2E7D32',
+	                    "Jewelry": '#9C27B0',
+        	            "Meat": '#F44336',
+                	    "Dry Fruits": '#FF6F00',
+	                    "Clothing": '#AB47BC',
+        	            "Sweets": '#FFB300',
+                	    "Beverages": '#00796B',
+	                    "Fruits": '#8BC34A',
+        	            "Personal Care": '#0097A7'
+                	};
+	                return categoryColors[category] || '#757575';
+        	    }),
+	            line: { color: 'white', width: 1.5 },
+        	    sizemode: 'area',
+	            sizeref: 2.0 * Math.max(...data.size) / (60**2),  // Optional: normalize bubble sizing
+        	    sizemin: 4
+	        },
+        	hovertemplate:
+	            '<b>%{text}</b><br>' +
+        	    'Quantity Sold: %{x}<br>' +
+	            'Profit Margin: %{y:.2f}%<extra></extra>'
+	    };
 
-        const layout = {
-            title: '',
-            xaxis: {
-                title: 'Sales Volume',
-                gridcolor: '#E0E0E0',
-                linecolor: '#E0E0E0'
-            },
-            yaxis: {
-                title: 'Profit Margin (%)',
-                gridcolor: '#E0E0E0',
-                linecolor: '#E0E0E0'
-            },
-            plot_bgcolor: 'white',
-            paper_bgcolor: 'white',
-            font: { family: 'Inter, sans-serif', size: 12, color: '#212121' },
-            margin: { l: 60, r: 80, t: 20, b: 60 }
-        };
+	    const layout = {
+        	title: '',
+	        xaxis: {
+        	    title: 'Quantity Sold',
+	            gridcolor: '#E0E0E0',
+        	    linecolor: '#E0E0E0'
+	        },
+	        yaxis: {
+        	    title: 'Profit Margin (%)',
+	            gridcolor: '#E0E0E0',
+        	    linecolor: '#E0E0E0'
+	        },
+        	plot_bgcolor: 'white',
+	        paper_bgcolor: 'white',
+        	font: { family: 'Inter, sans-serif', size: 12, color: '#212121' },
+	        margin: { l: 60, r: 20, t: 20, b: 60 }
+	    };
 
-        const config = {
-            responsive: true,
-            displayModeBar: false
-        };
+	    const config = {
+        	responsive: true,
+	        displayModeBar: false
+	    };
 
-        try {
-            Plotly.newPlot(container, [trace], layout, config);
-            this.charts.productPerformance = container;
-        } catch (error) {
-            console.error('Error rendering product performance chart:', error);
-            container.innerHTML = '<div style="text-align: center; padding: 50px; color: #666;">Error loading product performance chart</div>';
-        }
-    }
+	    try {
+        	Plotly.newPlot(container, [trace], layout, config);
+	        this.charts.productPerformance = container;
+	    } catch (error) {
+        	console.error('Error rendering product performance chart:', error);
+	        container.innerHTML = '<div style="text-align: center; padding: 50px; color: #666;">Error loading product performance chart</div>';
+    	}
+	}
 
     renderCustomerSegmentationChart() {
         const container = document.getElementById('customer-segmentation-chart');
@@ -410,9 +429,11 @@ class DashboardManager {
 
     renderSeasonalTrendsChart() {
         const container = document.getElementById('seasonal-trends-chart');
+	console.log("Container:", container);
         if (!container) return;
 
         const data = this.data.charts?.seasonalTrends || this.getMockData('/api/dashboard/charts').seasonalTrends;
+	console.log("Seasonal Trends Data:", data);
 
         const traces = Object.keys(data).map((category, index) => ({
             x: data[category].x,

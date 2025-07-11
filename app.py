@@ -960,9 +960,9 @@ async def get_alerts_notifications():
 async def get_model_performance():
     """Get prediction model performance metrics"""
     try:
-        if prediction_model and prediction_model.model is not None:
-            performance = prediction_model.get_model_performance()
-            trends = prediction_model.get_trend_analysis()
+        if sales_predictor and sales_predictor.model is not None:
+            performance = sales_predictor.get_model_performance()
+            trends = sales_predictor.get_trend_analysis()
             
             return {
                 "performance": performance,
